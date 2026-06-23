@@ -50,7 +50,7 @@ router.post('/', authMiddleware, adminMiddleware,
   async (req, res, next) => {
     try {
       const { categoriaId, nombre, descripcion, precio, imagenUrl } = req.body;
-      const plato = await prisma.plato.create({ data:{ categoriaId:+categoriaId, nombre, descripcion, precio:+precio, imagenUrl } });
+      const plato = await prisma.plato.create({ data:{ categoriaId:+categoriaId, nombre, descripcion, precio:+precio, imagenUrl, disponible:true } });
       res.status(201).json(plato);
     } catch(e) { next(e); }
   }
