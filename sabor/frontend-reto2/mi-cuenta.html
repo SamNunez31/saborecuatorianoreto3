@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Cuenta · Sabor Ecuatoriano</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<nav class="navbar" id="navbar" role="navigation"></nav>
+<main id="main-content" style="padding-top:80px">
+  <div style="max-width:760px;margin:0 auto;padding:40px 5% 60px">
+    <div style="margin-bottom:28px"><span class="eyebrow">Perfil</span><h1 style="font-size:1.8rem;margin-top:4px">Mi cuenta</h1></div>
+
+    <!-- TABS -->
+    <div role="tablist" style="display:flex;border-bottom:2px solid #e8e2d8;margin-bottom:28px">
+      <button role="tab" id="tabTarjetasBtn" aria-selected="true"  onclick="switchTab('tarjetas')" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid var(--dorado);margin-bottom:-2px">💳 Mis tarjetas</button>
+      <button role="tab" id="tabPerfilBtn"   aria-selected="false" onclick="switchTab('perfil')"   style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--gris)">👤 Mis datos</button>
+    </div>
+
+    <!-- TAB TARJETAS -->
+    <div id="tabTarjetas" role="tabpanel">
+      <!-- Tarjeta virtual -->
+      <div class="card-virtual Visa" id="virtualCard" aria-label="Vista previa de tarjeta" style="margin-bottom:28px">
+        <div class="card-shine" aria-hidden="true"></div>
+        <div class="card-chip" aria-hidden="true"></div>
+        <div class="card-num">**** **** **** ****</div>
+        <div class="card-info">
+          <div><div class="card-lbl">Titular</div><div class="card-val" id="cvTitular">TU NOMBRE</div></div>
+          <div><div class="card-lbl">Vence</div><div class="card-val" id="cvExp">MM/AA</div></div>
+          <div style="font-family:serif;font-style:italic;font-size:20px;font-weight:700">Visa</div>
+        </div>
+      </div>
+
+      <!-- Tarjetas guardadas -->
+      <div id="tarjetasList" aria-live="polite" style="margin-bottom:24px"></div>
+
+      <!-- Formulario nueva tarjeta -->
+      <section aria-labelledby="nuevaTarjeta-title" style="background:#fff;border-radius:14px;border:1px solid #e8e2d8;padding:24px">
+        <h2 id="nuevaTarjeta-title" style="font-size:1rem;margin-bottom:18px">Agregar nueva tarjeta</h2>
+        <div class="form-group">
+          <label class="form-label">Marca</label>
+          <div style="display:flex;gap:10px" role="group" aria-label="Seleccionar marca de tarjeta">
+            <button class="marca-btn active" data-marca="Visa"       style="border:2px solid var(--dorado);border-radius:8px;padding:8px 14px;background:rgba(201,150,26,.08);cursor:pointer;font-weight:700;font-size:13px">Visa</button>
+            <button class="marca-btn"        data-marca="Mastercard" style="border:2px solid #ddd;border-radius:8px;padding:8px 14px;background:#fff;cursor:pointer;font-weight:700;font-size:13px">MC</button>
+            <button class="marca-btn"        data-marca="Amex"       style="border:2px solid #ddd;border-radius:8px;padding:8px 14px;background:#fff;cursor:pointer;font-weight:700;font-size:13px">Amex</button>
+            <button class="marca-btn"        data-marca="Otro"       style="border:2px solid #ddd;border-radius:8px;padding:8px 14px;background:#fff;cursor:pointer;font-size:13px;color:var(--gris)">Otro</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cardNum">Número de tarjeta</label>
+          <input type="text" class="form-input" id="cardNum" maxlength="19" placeholder="1234 5678 9012 3456" autocomplete="cc-number" aria-describedby="cardNumHint">
+          <small id="cardNumHint" style="color:var(--gris);font-size:12px">Solo guardamos los últimos 4 dígitos.</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cardTitular">Nombre del titular</label>
+          <input type="text" class="form-input" id="cardTitular" placeholder="JUAN PÉREZ" autocomplete="cc-name">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="cardMes">Mes</label>
+            <select class="form-input" id="cardMes" autocomplete="cc-exp-month">
+              <option value="">MM</option>
+              ${Array.from({length:12},(_,i)=>{const m=String(i+1).padStart(2,'0');return`<option value="${m}">${m}</option>`}).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cardAnio">Año</label>
+            <select class="form-input" id="cardAnio" autocomplete="cc-exp-year">
+              <option value="">AAAA</option>
+              ${Array.from({length:8},(_,i)=>`<option value="${new Date().getFullYear()+i}">${new Date().getFullYear()+i}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="cardCvv">CVV <span style="color:var(--gris);font-weight:400">(no se guarda)</span></label>
+          <input type="password" class="form-input" id="cardCvv" maxlength="4" placeholder="•••" autocomplete="cc-csc" aria-describedby="cvvHint">
+          <small id="cvvHint" style="color:var(--gris);font-size:12px">Solo para validar, nunca lo almacenamos.</small>
+        </div>
+        <button class="btn btn-primary btn-full" id="saveTarjetaBtn">Guardar tarjeta</button>
+      </section>
+    </div>
+
+    <!-- TAB PERFIL -->
+    <div id="tabPerfil" role="tabpanel" style="display:none">
+      <div style="background:#fff;border-radius:14px;border:1px solid #e8e2d8;padding:24px">
+        <div style="display:grid;gap:16px;margin-bottom:24px">
+          <div><div style="font-size:12px;color:var(--gris);text-transform:uppercase;font-weight:600;letter-spacing:.1em">Nombre</div><div style="font-weight:600;margin-top:4px" id="perfilNombre"></div></div>
+          <div><div style="font-size:12px;color:var(--gris);text-transform:uppercase;font-weight:600;letter-spacing:.1em">Email</div><div style="font-weight:600;margin-top:4px" id="perfilEmail"></div></div>
+          <div><div style="font-size:12px;color:var(--gris);text-transform:uppercase;font-weight:600;letter-spacing:.1em">Rol</div><div style="margin-top:4px" id="perfilRol"></div></div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="AuthModel.logout()">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</main>
+<div class="toast-wrap" aria-live="polite"></div>
+<script src="models/app.model.js"></script>
+<script src="views/app.view.js"></script>
+<script src="controllers/app.controller.js"></script>
+<script>
+  function switchTab(tab) {
+    document.getElementById('tabTarjetas').style.display = tab==='tarjetas' ? 'block' : 'none';
+    document.getElementById('tabPerfil').style.display   = tab==='perfil'   ? 'block' : 'none';
+    document.getElementById('tabTarjetasBtn').setAttribute('aria-selected', tab==='tarjetas');
+    document.getElementById('tabPerfilBtn').setAttribute('aria-selected',   tab==='perfil');
+    document.getElementById('tabTarjetasBtn').style.borderBottomColor = tab==='tarjetas' ? 'var(--dorado)' : 'transparent';
+    document.getElementById('tabTarjetasBtn').style.color = tab==='tarjetas' ? 'var(--negro)' : 'var(--gris)';
+    document.getElementById('tabPerfilBtn').style.borderBottomColor = tab==='perfil' ? 'var(--dorado)' : 'transparent';
+    document.getElementById('tabPerfilBtn').style.color = tab==='perfil' ? 'var(--negro)' : 'var(--gris)';
+  }
+  document.addEventListener('DOMContentLoaded', () => MiCuentaController.init());
+</script>
+</body>
+</html>

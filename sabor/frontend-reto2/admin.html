@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin · Sabor Ecuatoriano</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" role="navigation" aria-label="Menú de administración">
+    <div class="sidebar-brand">Sabor <em>Ecuatoriano</em><br><small style="font-size:11px;color:rgba(201,150,26,.5);font-style:normal;font-family:var(--sans)">Panel admin</small></div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item active" data-sec="dashboard" onclick="AdminController.showSection('dashboard')"><span aria-hidden="true">📊</span> Dashboard</button>
+      <button class="sidebar-item" data-sec="pedidos"   onclick="AdminController.showSection('pedidos')">  <span aria-hidden="true">📦</span> Pedidos</button>
+      <button class="sidebar-item" data-sec="facturas"  onclick="AdminController.showSection('facturas')"> <span aria-hidden="true">🧾</span> Facturas</button>
+      <button class="sidebar-item" data-sec="ventas"    onclick="AdminController.showSection('ventas')">   <span aria-hidden="true">💰</span> Ventas del día</button>
+      <button class="sidebar-item" data-sec="platos"    onclick="AdminController.showSection('platos')">   <span aria-hidden="true">🍽</span> Platos</button>
+      <button class="sidebar-item" data-sec="clientes"  onclick="AdminController.showSection('clientes')"> <span aria-hidden="true">👥</span> Clientes</button>
+    </nav>
+    <div style="padding:12px;border-top:1px solid rgba(201,150,26,.15)">
+      <button class="sidebar-item" onclick="AuthModel.logout()" style="color:rgba(255,100,100,.7)"><span aria-hidden="true">→</span> Salir</button>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO -->
+  <main class="admin-content" role="main">
+
+    <!-- DASHBOARD -->
+    <section class="sec" id="sec-dashboard">
+      <div class="page-header">
+        <h1 style="font-size:1.8rem">Dashboard</h1>
+        <p style="color:var(--gris)" id="fechaDashboard"></p>
+      </div>
+      <div class="stat-grid" role="list">
+        <div class="stat-card" role="listitem"><div class="stat-label">Ventas hoy</div><div class="stat-value gold" id="stVentas" aria-live="polite">—</div></div>
+        <div class="stat-card" role="listitem"><div class="stat-label">Pedidos hoy</div><div class="stat-value" id="stPedidos" aria-live="polite">—</div></div>
+        <div class="stat-card" role="listitem"><div class="stat-label">Pendientes</div><div class="stat-value" id="stPend" aria-live="polite">—</div></div>
+        <div class="stat-card" role="listitem"><div class="stat-label">Clientes</div><div class="stat-value" id="stClientes" aria-live="polite">—</div></div>
+        <div class="stat-card" role="listitem"><div class="stat-label">Platos activos</div><div class="stat-value" id="stPlatos" aria-live="polite">—</div></div>
+      </div>
+      <h2 style="font-size:1rem;margin-bottom:14px">Accesos rápidos</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px">
+        <button onclick="AdminController.showSection('pedidos')"  style="background:#fff;border:1px solid #e8e2d8;border-radius:14px;padding:20px;cursor:pointer;text-align:left;transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''"><div style="font-size:28px;margin-bottom:8px">📦</div><div style="font-weight:600">Ver pedidos</div><div style="font-size:13px;color:var(--gris)">Gestiona estados</div></button>
+        <button onclick="AdminController.showSection('ventas')"   style="background:#fff;border:1px solid #e8e2d8;border-radius:14px;padding:20px;cursor:pointer;text-align:left;transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''"><div style="font-size:28px;margin-bottom:8px">💰</div><div style="font-weight:600">Ventas del día</div><div style="font-size:13px;color:var(--gris)">Facturas de hoy</div></button>
+        <button onclick="AdminController.showSection('platos')"   style="background:#fff;border:1px solid #e8e2d8;border-radius:14px;padding:20px;cursor:pointer;text-align:left;transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''"><div style="font-size:28px;margin-bottom:8px">🍽</div><div style="font-weight:600">Gestionar menú</div><div style="font-size:13px;color:var(--gris)">CRUD de platos</div></button>
+      </div>
+    </section>
+
+    <!-- PEDIDOS -->
+    <section class="sec" id="sec-pedidos" style="display:none">
+      <div class="page-header"><h1 style="font-size:1.8rem">Pedidos</h1><p style="color:var(--gris)">Gestiona todos los pedidos activos</p></div>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Cliente</th><th>Tipo</th><th>Platos</th><th>Total</th><th>Estado</th><th>Fecha</th><th>Acción</th></tr></thead><tbody id="pedidosBody" aria-live="polite"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gris)">Cargando...</td></tr></tbody></table></div>
+    </section>
+
+    <!-- FACTURAS -->
+    <section class="sec" id="sec-facturas" style="display:none">
+      <div class="page-header"><h1 style="font-size:1.8rem">Facturas</h1><p style="color:var(--gris)">Historial completo</p></div>
+      <div class="table-wrap"><table><thead><tr><th>N° Factura</th><th>Cliente</th><th>Subtotal</th><th>IVA</th><th>Total</th><th>Forma pago</th><th>Estado</th><th>Fecha</th></tr></thead><tbody id="facturasBody" aria-live="polite"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gris)">Cargando...</td></tr></tbody></table></div>
+    </section>
+
+    <!-- VENTAS DÍA -->
+    <section class="sec" id="sec-ventas" style="display:none">
+      <div class="page-header"><h1 style="font-size:1.8rem">Ventas del día</h1><p style="color:var(--gris)" id="fechaVentas"></p></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:28px">
+        <div class="stat-card"><div class="stat-label">Total recaudado</div><div class="stat-value gold" id="vdTotal" aria-live="polite">—</div></div>
+        <div class="stat-card"><div class="stat-label">Pedidos facturados</div><div class="stat-value" id="vdCant" aria-live="polite">—</div></div>
+        <div class="stat-card"><div class="stat-label">IVA generado</div><div class="stat-value" id="vdIva" aria-live="polite">—</div></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Factura</th><th>Cliente</th><th>Entrega</th><th>Subtotal</th><th>IVA</th><th>Total</th><th>Pago</th><th>Estado</th></tr></thead><tbody id="ventasBody" aria-live="polite"></tbody></table></div>
+    </section>
+
+    <!-- PLATOS -->
+    <section class="sec" id="sec-platos" style="display:none">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><h1 style="font-size:1.8rem">Platos</h1><p style="color:var(--gris)">Menú del restaurante</p></div>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('platoModal').classList.add('open')" aria-label="Agregar nuevo plato">+ Agregar plato</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Disponible</th><th>Acción</th></tr></thead><tbody id="platosBody" aria-live="polite"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gris)">Cargando...</td></tr></tbody></table></div>
+    </section>
+
+    <!-- CLIENTES -->
+    <section class="sec" id="sec-clientes" style="display:none">
+      <div class="page-header"><h1 style="font-size:1.8rem">Clientes</h1><p style="color:var(--gris)">Clientes registrados</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Cédula</th><th>Pedidos</th><th>Registro</th></tr></thead><tbody id="clientesBody" aria-live="polite"><tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gris)">Cargando...</td></tr></tbody></table></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Modal agregar plato -->
+<div class="modal-overlay" id="platoModal" role="dialog" aria-modal="true" aria-labelledby="platoModalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="platoModalTitle" style="font-size:1.1rem">Agregar plato</h2>
+      <button class="modal-close" onclick="document.getElementById('platoModal').classList.remove('open')" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label" for="pCategoria">Categoría</label><select class="form-input" id="pCategoria"><option value="">Seleccionar...</option></select></div>
+    <div class="form-group"><label class="form-label" for="pNombre">Nombre</label><input type="text" class="form-input" id="pNombre" placeholder="Seco de pollo" required></div>
+    <div class="form-group"><label class="form-label" for="pDesc">Descripción</label><textarea class="form-input" id="pDesc" rows="2"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label" for="pPrecio">Precio (USD)</label><input type="number" class="form-input" id="pPrecio" placeholder="8.50" step="0.50" min="0" required></div>
+      <div class="form-group"><label class="form-label" for="pStock">Stock</label><input type="number" class="form-input" id="pStock" placeholder="100" min="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label" for="pImagen">URL imagen <span style="color:var(--gris);font-weight:400">(opcional)</span></label><input type="text" class="form-input" id="pImagen" placeholder="https://..."></div>
+    <button class="btn btn-primary btn-full" onclick="AdminController.guardarPlato()">Guardar plato</button>
+  </div>
+</div>
+
+<div class="toast-wrap" aria-live="polite"></div>
+<script src="models/app.model.js"></script>
+<script src="views/app.view.js"></script>
+<script src="controllers/app.controller.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('fechaDashboard').textContent = new Date().toLocaleDateString('es-EC',{ weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('fechaVentas').textContent    = new Date().toLocaleDateString('es-EC',{ day:'numeric', month:'long', year:'numeric' });
+    AdminController.init();
+  });
+</script>
+</body>
+</html>

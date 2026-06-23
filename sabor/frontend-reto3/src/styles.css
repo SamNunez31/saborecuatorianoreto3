@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --se-dorado:  #c9961a;
+  --se-dorado-l:#e8b84b;
+  --se-negro:   #1a1a1a;
+  --se-crema:   #faf6ef;
+  --se-beige:   #f0e8d8;
+  --se-gris:    #6b7280;
+  --se-rojo:    #dc2626;
+  --se-verde:   #16a34a;
+  --se-serif:   'Playfair Display', Georgia, serif;
+}
+
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--se-crema); }
+:focus-visible { outline: 3px solid var(--se-dorado); outline-offset: 2px; }
+
+/* Navbar */
+.navbar-sabor { background: rgba(26,26,26,.97)!important; border-bottom:1px solid rgba(201,150,26,.2); }
+.navbar-brand-sabor { font-family:var(--se-serif); font-style:italic; color:var(--se-dorado)!important; font-size:1.3rem; }
+.navbar-sabor .nav-link { color:rgba(250,246,239,.75)!important; font-size:14px; font-weight:500; }
+.navbar-sabor .nav-link:hover, .navbar-sabor .nav-link.active { color:var(--se-dorado)!important; }
+
+/* Botones */
+.btn-dorado { background:var(--se-dorado); color:var(--se-negro); border:none; font-weight:600; }
+.btn-dorado:hover { background:var(--se-dorado-l); color:var(--se-negro); }
+.btn-negro  { background:var(--se-negro); color:var(--se-crema); border:none; }
+.btn-negro:hover { background:#333; color:var(--se-crema); }
+
+/* Hero */
+.hero-sabor { min-height:92vh; display:flex; align-items:center; background:linear-gradient(rgba(26,26,26,.65),rgba(26,26,26,.88)),url('https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=1600&q=80') center/cover; color:#fff; padding:100px 0 60px; }
+.hero-sabor h1 { font-family:var(--se-serif); font-size:clamp(2rem,5vw,3.5rem); }
+.hero-sabor em { color:var(--se-dorado); }
+.eyebrow { font-size:12px; font-weight:600; letter-spacing:.15em; text-transform:uppercase; color:var(--se-dorado); }
+
+/* Cards de platos */
+.plato-card { border:1px solid #e8e2d8; border-radius:14px; overflow:hidden; transition:transform .25s,box-shadow .25s; }
+.plato-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(26,26,26,.12); }
+.plato-card .card-img-top { height:200px; object-fit:cover; background:var(--se-beige); }
+.plato-precio { font-size:1.1rem; font-weight:700; color:var(--se-negro); }
+
+/* Filtros */
+.filtro-btn { border-radius:999px; border:1.5px solid #ccc; background:transparent; padding:6px 16px; font-size:13px; font-weight:500; cursor:pointer; transition:.2s; }
+.filtro-btn.active, .filtro-btn:hover { background:var(--se-negro); color:#fff; border-color:var(--se-negro); }
+
+/* Carrito offcanvas */
+.offcanvas-sabor .offcanvas-header { border-bottom:1px solid #e8e2d8; }
+.cart-item-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f0e8d8; }
+
+/* Tarjeta virtual bancaria */
+.tarjeta-virtual { width:100%; max-width:340px; aspect-ratio:1.586; border-radius:16px; padding:22px; position:relative; overflow:hidden; background:linear-gradient(135deg,#1a237e,#283593,#1565c0); color:#fff; box-shadow:0 16px 40px rgba(0,0,0,.28); margin:0 auto; }
+.tarjeta-virtual.Mastercard { background:linear-gradient(135deg,#7f1d1d,#991b1b,#1a1a1a); }
+.tarjeta-virtual.Amex       { background:linear-gradient(135deg,#14532d,#166534,#15803d); }
+.tarjeta-virtual.Otro       { background:linear-gradient(135deg,#374151,#4b5563,#6b7280); }
+.card-chip { width:38px; height:28px; border-radius:5px; background:linear-gradient(135deg,#d4af37,#f5d060,#d4af37); margin-bottom:20px; }
+.card-num  { font-family:'Courier New',monospace; font-size:17px; letter-spacing:.22em; margin-bottom:18px; }
+.card-shine { position:absolute; inset:0; background:radial-gradient(ellipse at 30% 30%,rgba(255,255,255,.1) 0%,transparent 60%); pointer-events:none; }
+.card-lbl { font-size:9px; opacity:.6; text-transform:uppercase; letter-spacing:.1em; margin-bottom:3px; }
+.card-val { font-size:13px; font-weight:600; text-transform:uppercase; }
+.marca-btn { border:2px solid #ddd; border-radius:8px; padding:8px 12px; background:#fff; cursor:pointer; transition:.2s; height:44px; min-width:60px; font-weight:700; font-size:13px; }
+.marca-btn.active { border-color:var(--se-dorado); background:rgba(201,150,26,.08); }
+
+/* Admin sidebar */
+.sidebar-admin { width:230px; background:var(--se-negro); position:fixed; top:56px; left:0; bottom:0; z-index:100; border-right:1px solid rgba(201,150,26,.15); overflow-y:auto; }
+.sidebar-admin .nav-link { color:rgba(250,246,239,.6); font-size:14px; border-radius:8px; margin-bottom:4px; transition:.2s; }
+.sidebar-admin .nav-link:hover, .sidebar-admin .nav-link.active { background:rgba(201,150,26,.15); color:var(--se-dorado); }
+.admin-content { margin-left:230px; padding:88px 32px 32px; min-height:100vh; background:var(--se-crema); }
+
+/* Stat cards */
+.stat-card { background:#fff; border-radius:14px; padding:22px; border:1px solid #e8e2d8; }
+.stat-value { font-family:var(--se-serif); font-size:1.9rem; font-weight:700; color:var(--se-negro); }
+.stat-value.gold { color:var(--se-dorado); }
+
+/* Tabla */
+.table-sabor thead th { background:var(--se-beige); font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--se-gris); font-weight:600; }
+
+/* Badges de estado */
+.badge-pendiente      { background:#fff3cd!important; color:#856404!important; }
+.badge-en_preparacion { background:#cce5ff!important; color:#004085!important; }
+.badge-listo          { background:#d4edda!important; color:#155724!important; }
+.badge-entregado      { background:#d1ecf1!important; color:#0c5460!important; }
+.badge-cancelado      { background:#f8d7da!important; color:#721c24!important; }
+.badge-emitida        { background:#fff3cd!important; color:#856404!important; }
+.badge-pagada         { background:#d4edda!important; color:#155724!important; }
+.badge-anulada        { background:#e5e7eb!important; color:#374151!important; }
+
+/* Toast */
+.toast-fixed { position:fixed; bottom:24px; right:24px; z-index:9999; }
+
+@media(max-width:768px) {
+  .sidebar-admin { display:none; }
+  .admin-content { margin-left:0; padding:72px 16px 16px; }
+}

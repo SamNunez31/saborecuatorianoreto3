@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menú · Sabor Ecuatoriano</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<a href="#main-content" class="sr-only" style="position:absolute;top:4px;left:4px;background:var(--dorado);color:#000;padding:8px;z-index:9999;border-radius:4px;font-weight:600">Saltar al contenido</a>
+<nav class="navbar" id="navbar" role="navigation" aria-label="Menú principal"></nav>
+
+<main id="main-content" style="padding-top:80px">
+  <div style="max-width:1200px;margin:0 auto;padding:40px 5% 60px">
+    <header class="section-header" style="text-align:left;margin-bottom:28px">
+      <span class="eyebrow">Lo que tenemos hoy</span>
+      <h1 style="font-size:2rem">Nuestro menú</h1>
+    </header>
+
+    <!-- FILTROS -->
+    <nav aria-label="Filtrar por categoría">
+      <div class="filtros" id="filtros" role="group" aria-label="Categorías disponibles">
+        <button class="filtro-btn active" id="filtroTodos" onclick="MenuController.filtrar(null, this)" aria-pressed="true">Todos</button>
+      </div>
+    </nav>
+
+    <!-- GRID -->
+    <div class="grid-platos" id="platosGrid" role="list" aria-label="Platos disponibles" aria-live="polite">
+    </div>
+  </div>
+</main>
+
+<div class="toast-wrap" aria-live="polite"></div>
+
+<script src="models/app.model.js"></script>
+<script src="views/app.view.js"></script>
+<script src="controllers/app.controller.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => MenuController.init());
+</script>
+</body>
+</html>

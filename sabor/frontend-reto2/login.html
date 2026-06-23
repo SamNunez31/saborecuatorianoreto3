@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingresar · Sabor Ecuatoriano</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<main class="auth-page" role="main">
+  <div class="auth-left" aria-hidden="true">
+    <div>
+      <div style="font-family:var(--serif);font-style:italic;color:var(--dorado);font-size:1.3rem;margin-bottom:22px">Sabor Ecuatoriano</div>
+      <h1>Tradición en<br>cada plato</h1>
+      <p style="margin-top:14px">Pide en línea y recibe o recógelo en nuestro local.</p>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-form">
+      <h2>Bienvenido de vuelta</h2>
+      <p class="sub">Ingresa con tu email y contraseña.</p>
+
+      <!-- TABS -->
+      <div role="tablist" style="display:flex;border-bottom:2px solid #e8e2d8;margin-bottom:28px;gap:0">
+        <button role="tab" aria-selected="true"  id="tabLoginBtn"  onclick="showTab('login')"    style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid var(--dorado);margin-bottom:-2px;color:var(--negro)">Ingresar</button>
+        <button role="tab" aria-selected="false" id="tabRegBtn"    onclick="showTab('register')" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--gris)">Registrarse</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="tabLogin" role="tabpanel" aria-labelledby="tabLoginBtn">
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="loginEmail">Email</label>
+            <input type="email" class="form-input" id="loginEmail" name="email" placeholder="tu@email.com" autocomplete="email" required aria-required="true" aria-describedby="loginEmailErr">
+            <span class="form-error" id="loginEmailErr" role="alert"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="loginPass">Contraseña</label>
+            <input type="password" class="form-input" id="loginPass" name="password" placeholder="••••••••" autocomplete="current-password" required aria-required="true" aria-describedby="loginPassErr">
+            <span class="form-error" id="loginPassErr" role="alert"></span>
+          </div>
+          <button type="submit" id="btnLogin" class="btn btn-primary btn-full" style="margin-top:8px">Ingresar</button>
+        </form>
+        <p class="auth-switch">¿No tienes cuenta? <a onclick="showTab('register')" role="button" tabindex="0">Regístrate aquí</a></p>
+      </div>
+
+      <!-- REGISTRO -->
+      <div id="tabRegister" role="tabpanel" aria-labelledby="tabRegBtn" style="display:none">
+        <form id="registerForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="regNombre">Nombre</label>
+              <input type="text" class="form-input" id="regNombre" placeholder="Juan" autocomplete="given-name" required aria-required="true" aria-describedby="regNombreErr">
+              <span class="form-error" id="regNombreErr" role="alert"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="regApellido">Apellido</label>
+              <input type="text" class="form-input" id="regApellido" placeholder="Pérez" autocomplete="family-name">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regEmail">Email</label>
+            <input type="email" class="form-input" id="regEmail" placeholder="tu@email.com" autocomplete="email" required aria-required="true" aria-describedby="regEmailErr">
+            <span class="form-error" id="regEmailErr" role="alert"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regPass">Contraseña</label>
+            <input type="password" class="form-input" id="regPass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required aria-required="true" aria-describedby="regPassErr">
+            <span class="form-error" id="regPassErr" role="alert"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regTel">Teléfono <span style="color:var(--gris);font-weight:400">(opcional)</span></label>
+            <input type="tel" class="form-input" id="regTel" placeholder="0999 999 999" autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regDir">Dirección <span style="color:var(--gris);font-weight:400">(opcional)</span></label>
+            <input type="text" class="form-input" id="regDir" placeholder="Av. Amazonas N12-34" autocomplete="street-address">
+          </div>
+          <button type="submit" id="btnRegister" class="btn btn-primary btn-full" style="margin-top:8px">Crear cuenta</button>
+        </form>
+        <p class="auth-switch">¿Ya tienes cuenta? <a onclick="showTab('login')" role="button" tabindex="0">Ingresa aquí</a></p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-wrap" aria-live="polite"></div>
+
+<script src="models/app.model.js"></script>
+<script src="views/app.view.js"></script>
+<script src="controllers/app.controller.js"></script>
+<script>
+  function showTab(tab) {
+    document.getElementById('tabLogin').style.display    = tab==='login'    ? 'block' : 'none';
+    document.getElementById('tabRegister').style.display = tab==='register' ? 'block' : 'none';
+    document.getElementById('tabLoginBtn').setAttribute('aria-selected', tab==='login');
+    document.getElementById('tabRegBtn').setAttribute('aria-selected',   tab==='register');
+    document.getElementById('tabLoginBtn').style.borderBottomColor = tab==='login'    ? 'var(--dorado)' : 'transparent';
+    document.getElementById('tabLoginBtn').style.color             = tab==='login'    ? 'var(--negro)'  : 'var(--gris)';
+    document.getElementById('tabRegBtn').style.borderBottomColor   = tab==='register' ? 'var(--dorado)' : 'transparent';
+    document.getElementById('tabRegBtn').style.color               = tab==='register' ? 'var(--negro)'  : 'var(--gris)';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    AuthController.initLogin();
+    AuthController.initRegister();
+  });
+</script>
+</body>
+</html>

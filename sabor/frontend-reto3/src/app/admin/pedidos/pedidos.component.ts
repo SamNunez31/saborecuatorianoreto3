@@ -1,0 +1,88 @@
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { PedidosService } from '../../core/services/api.services';
+import { ToastService } from '../../core/services/toast.service';
+import { Pedido, EstadoPedido } from '../../core/models';
+
+@Component({
+  selector: 'app-pedidos-admin',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div>
+      <div class="d-flex justify-content-between align-items-start mb-4">
+        <div><h1 style="font-family:var(--se-serif);font-size:1.8rem">Pedidos</h1><p class="text-muted">Gestiona todos los pedidos</p></div>
+        <button class="btn btn-dorado btn-sm" (click)="load()">↻ Actualizar</button>
+      </div>
+
+      @if (loading()) { <div class="text-center py-5"><div class="spinner-border" style="color:var(--se-dorado)"></div></div> }
+
+      <div class="table-sabor table-responsive rounded-4 border shadow-sm">
+        <table class="table table-hover align-middle mb-0" style="min-width:700px">
+          <thead>
+            <tr>
+              <th scope="col" style="width:60px">ID</th>
+              <th scope="col">Cliente</th>
+              <th scope="col" style="width:70px" class="text-center">Tipo</th>
+              <th scope="col">Platos</th>
+              <th scope="col" style="width:90px">Total</th>
+              <th scope="col" style="width:120px">Estado</th>
+              <th scope="col" style="width:95px">Fecha</th>
+              <th scope="col" style="width:160px">Cambiar estado</th>
+            </tr>
+          </thead>
+          <tbody aria-live="polite">
+            @for (p of pedidos(); track p.id) {
+              <tr>
+                <td class="fw-semibold text-muted" style="font-size:13px">#{{ p.id }}</td>
+                <td style="font-size:13px">{{ p.cliente?.nombre }} {{ p.cliente?.apellido }}</td>
+                <td class="text-center" style="font-size:20px" [attr.title]="p.tipoEntrega">{{ p.tipoEntrega === 'domicilio' ? '🛵' : '🏪' }}</td>
+                <td>
+                  <span class="d-block text-truncate text-muted" style="font-size:12px;max-width:160px">{{ platosResumen(p) }}</span>
+                </td>
+                <td class="fw-semibold" style="font-size:13px;white-space:nowrap">{{ p.factura?.total | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td><span class="badge" [ngClass]="'badge-' + p.estado">{{ estadoLabel(p.estado) }}</span></td>
+                <td style="font-size:12px;white-space:nowrap;color:var(--se-gris)">{{ p.fechaPedido | date:'dd/MM HH:mm' }}</td>
+                <td>
+                  <select class="form-select form-select-sm" style="font-size:12px"
+                          [value]="p.estado" (change)="cambiarEstado(p.id, $event)"
+                          [attr.aria-label]="'Estado del pedido #' + p.id">
+                    @for (e of estados; track e.value) {
+                      <option [value]="e.value" [selected]="p.estado === e.value">{{ e.label }}</option>
+                    }
+                  </select>
+                </td>
+              </tr>
+            }
+            @if (!loading() && pedidos().length === 0) {
+              <tr><td colspan="8" class="text-center py-5 text-muted">No hay pedidos.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `
+})
+export class PedidosAdminComponent implements OnInit {
+  private svc   = inject(PedidosService);
+  private toast = inject(ToastService);
+  pedidos = signal<Pedido[]>([]);
+  loading = signal(true);
+
+  estados = [
+    { value:'pendiente',       label:'Pendiente' },
+    { value:'en_preparacion',  label:'En preparación' },
+    { value:'listo',           label:'Listo' },
+    { value:'entregado',       label:'Entregado' },
+    { value:'cancelado',       label:'Cancelado' },
+  ];
+
+  ngOnInit(): void { this.load(); }
+  load(): void { this.loading.set(true); this.svc.getAll().subscribe({ next: p => { this.pedidos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  estadoLabel(e: string): string { return this.estados.find(x => x.value === e)?.label || e; }
+  platosResumen(p: Pedido): string { return p.detalles?.slice(0,2).map(d => d.plato?.nombre).join(', ') || '—'; }
+  cambiarEstado(id: number, e: Event): void {
+    const estado = (e.target as HTMLSelectElement).value as EstadoPedido;
+    this.svc.updateEstado(id, estado).subscribe({ next: () => this.toast.success('Estado actualizado'), error: () => this.toast.error('Error al actualizar') });
+  }
+}

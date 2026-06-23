@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique @db.VarChar(50)
+  descripcion String?
+  usuarios    Usuario[]
+  @@map("roles")
+}
+
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  rolId        Int      @map("rol_id")
+  nombre       String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  rol          Role     @relation(fields: [rolId], references: [id])
+  cliente      Cliente?
+  pedidos      Pedido[]
+  @@map("usuarios")
+}
+
+model Cliente {
+  id        Int       @id @default(autoincrement())
+  usuarioId Int       @unique @map("usuario_id")
+  nombre    String    @db.VarChar(100)
+  apellido  String    @db.VarChar(100)
+  telefono  String?   @db.VarChar(20)
+  cedula    String?   @unique @db.VarChar(20)
+  direccion String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  tarjetas  Tarjeta[]
+  pedidos   Pedido[]
+  @@map("clientes")
+}
+
+model Tarjeta {
+  id           Int      @id @default(autoincrement())
+  clienteId    Int      @map("cliente_id")
+  titular      String   @db.VarChar(100)
+  numeroMasked String   @map("numero_masked") @db.VarChar(19)
+  marca        String   @db.VarChar(20)
+  mesExp       String   @map("mes_exp") @db.Char(2)
+  anioExp      String   @map("anio_exp") @db.Char(4)
+  esPrincipal  Boolean  @default(false) @map("es_principal")
+  createdAt    DateTime @default(now()) @map("created_at")
+  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  pagos        Pago[]
+  @@map("tarjetas")
+}
+
+model CategoriaPlato {
+  id          Int     @id @default(autoincrement())
+  nombre      String  @unique @db.VarChar(80)
+  descripcion String?
+  platos      Plato[]
+  @@map("categorias_plato")
+}
+
+model Plato {
+  id          Int            @id @default(autoincrement())
+  categoriaId Int            @map("categoria_id")
+  nombre      String         @db.VarChar(150)
+  descripcion String?
+  precio      Decimal        @db.Decimal(8, 2)
+  disponible  Boolean        @default(true)
+  imagenUrl   String?        @map("imagen_url")
+  categoria   CategoriaPlato @relation(fields: [categoriaId], references: [id])
+  detalles    DetallePedido[]
+  @@map("platos")
+}
+
+model FormaPago {
+  id          Int     @id @default(autoincrement())
+  tipo        String  @unique @db.VarChar(50)
+  descripcion String?
+  pagos       Pago[]
+  @@map("formas_pago")
+}
+
+model Pedido {
+  id            Int             @id @default(autoincrement())
+  clienteId     Int             @map("cliente_id")
+  usuarioId     Int?            @map("usuario_id")
+  tipoEntrega   String          @map("tipo_entrega") @db.VarChar(20)
+  estado        String          @default("pendiente") @db.VarChar(30)
+  observaciones String?
+  fechaPedido   DateTime        @default(now()) @map("fecha_pedido")
+  cliente       Cliente         @relation(fields: [clienteId], references: [id])
+  usuario       Usuario?        @relation(fields: [usuarioId], references: [id])
+  detalles      DetallePedido[]
+  factura       Factura?
+  @@map("pedidos")
+}
+
+model DetallePedido {
+  id             Int     @id @default(autoincrement())
+  pedidoId       Int     @map("pedido_id")
+  platoId        Int     @map("plato_id")
+  cantidad       Int
+  precioUnitario Decimal @map("precio_unitario") @db.Decimal(8, 2)
+  nota           String?
+  pedido         Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  plato          Plato   @relation(fields: [platoId], references: [id])
+  @@map("detalle_pedido")
+}
+
+model Factura {
+  id            Int      @id @default(autoincrement())
+  pedidoId      Int      @unique @map("pedido_id")
+  numeroFactura String   @unique @map("numero_factura") @db.VarChar(20)
+  fechaEmision  DateTime @default(now()) @map("fecha_emision")
+  subtotal      Decimal  @db.Decimal(10, 2)
+  iva           Decimal  @db.Decimal(10, 2)
+  total         Decimal  @db.Decimal(10, 2)
+  estado        String   @default("emitida") @db.VarChar(20)
+  pedido        Pedido   @relation(fields: [pedidoId], references: [id])
+  pagos         Pago[]
+  @@map("facturas")
+}
+
+model Pago {
+  id          Int       @id @default(autoincrement())
+  facturaId   Int       @map("factura_id")
+  formaPagoId Int       @map("forma_pago_id")
+  tarjetaId   Int?      @map("tarjeta_id")
+  monto       Decimal   @db.Decimal(10, 2)
+  referencia  String?   @db.VarChar(100)
+  fechaPago   DateTime  @default(now()) @map("fecha_pago")
+  estado      String    @default("completado") @db.VarChar(20)
+  factura     Factura   @relation(fields: [facturaId], references: [id])
+  formaPago   FormaPago @relation(fields: [formaPagoId], references: [id])
+  tarjeta     Tarjeta?  @relation(fields: [tarjetaId], references: [id])
+  @@map("pagos")
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Pedidos · Sabor Ecuatoriano</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<nav class="navbar" id="navbar" role="navigation"></nav>
+<main id="main-content" style="padding-top:80px">
+  <div style="max-width:760px;margin:0 auto;padding:40px 5% 60px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">
+      <div><span class="eyebrow">Tu historial</span><h1 style="font-size:1.8rem;margin-top:4px">Mis pedidos</h1></div>
+      <a href="menu.html" class="btn btn-primary btn-sm">+ Nuevo pedido</a>
+    </div>
+    <div id="pedidosList" role="feed" aria-label="Lista de pedidos" aria-live="polite"></div>
+  </div>
+</main>
+
+<!-- Modal factura -->
+<div class="modal-overlay" id="facturaModal" role="dialog" aria-modal="true" aria-labelledby="facturaTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="facturaTitle" style="font-size:1.1rem">Detalle de factura</h2>
+      <button class="modal-close" onclick="document.getElementById('facturaModal').classList.remove('open')" aria-label="Cerrar factura">✕</button>
+    </div>
+    <div id="facturaContent"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" aria-live="polite"></div>
+<script src="models/app.model.js"></script>
+<script src="views/app.view.js"></script>
+<script src="controllers/app.controller.js"></script>
+<script>document.addEventListener('DOMContentLoaded', () => MisPedidosController.init());</script>
+</body>
+</html>

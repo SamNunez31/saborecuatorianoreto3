@@ -1,0 +1,66 @@
+<!-- CHECKOUT -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout · Sabor Ecuatoriano</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<nav class="navbar" id="navbar" role="navigation"></nav>
+<main id="main-content" style="padding-top:80px">
+  <div style="max-width:900px;margin:0 auto;padding:40px 5% 60px">
+    <h1 style="font-size:1.8rem;margin-bottom:28px">Confirma tu pedido</h1>
+    <div style="display:grid;grid-template-columns:1fr 360px;gap:28px">
+      <!-- Izquierda -->
+      <div>
+        <section aria-labelledby="resumen-title" style="background:#fff;border-radius:14px;border:1px solid #e8e2d8;margin-bottom:20px">
+          <h2 id="resumen-title" style="padding:16px 20px;border-bottom:1px solid #e8e2d8;font-size:1rem">Resumen del pedido</h2>
+          <div style="padding:16px 20px" id="resumenItems"></div>
+          <div style="padding:14px 20px;background:var(--beige)">
+            <div class="total-row"><span>Subtotal</span><span id="ckSubtotal">$0.00</span></div>
+            <div class="total-row"><span>IVA (15%)</span><span id="ckIva">$0.00</span></div>
+            <div class="total-row bold"><span>Total</span><span id="ckTotal">$0.00</span></div>
+          </div>
+        </section>
+        <section aria-labelledby="entrega-title" style="background:#fff;border-radius:14px;border:1px solid #e8e2d8;padding:20px;margin-bottom:20px">
+          <h2 id="entrega-title" style="font-size:1rem;margin-bottom:14px">Tipo de entrega</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <label style="cursor:pointer">
+              <input type="radio" name="entrega" value="retiro" checked> <span style="font-weight:600">🏪 Retiro en local</span>
+              <div style="font-size:12px;color:var(--gris);margin-left:20px">Av. Amazonas y Colón</div>
+            </label>
+            <label style="cursor:pointer">
+              <input type="radio" name="entrega" value="domicilio"> <span style="font-weight:600">🛵 A domicilio</span>
+              <div style="font-size:12px;color:var(--gris);margin-left:20px">Tu dirección registrada</div>
+            </label>
+          </div>
+        </section>
+        <div class="form-group">
+          <label class="form-label" for="observaciones">Observaciones <span style="color:var(--gris);font-weight:400">(opcional)</span></label>
+          <textarea class="form-input" id="observaciones" rows="2" placeholder="Sin cebolla, extra picante..."></textarea>
+        </div>
+      </div>
+      <!-- Derecha -->
+      <div>
+        <section aria-labelledby="pago-title" style="background:#fff;border-radius:14px;border:1px solid #e8e2d8;padding:20px;position:sticky;top:90px">
+          <h2 id="pago-title" style="font-size:1rem;margin-bottom:14px">Forma de pago</h2>
+          <div id="formasPago" role="radiogroup" aria-label="Selecciona forma de pago"></div>
+          <div id="seccionTarjetas" style="display:none;margin-top:12px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px">Mis tarjetas</div>
+            <div id="tarjetasLista"></div>
+          </div>
+          <button class="btn btn-primary btn-full" id="btnConfirmar" style="margin-top:16px" aria-label="Confirmar y pagar pedido">Confirmar y pagar</button>
+          <p style="font-size:12px;color:var(--gris);text-align:center;margin-top:10px">Recibirás tu factura automáticamente.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<div class="toast-wrap" aria-live="polite"></div>
+<script src="models/app.model.js"></script>
+<script src="views/app.view.js"></script>
+<script src="controllers/app.controller.js"></script>
+<script>document.addEventListener('DOMContentLoaded', () => CheckoutController.init());</script>
+</body>
+</html>
