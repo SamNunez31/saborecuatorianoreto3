@@ -4,7 +4,7 @@
  * Patrón MVC: Model layer
  */
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://saborecuatorianoreto3.onrender.com/api';
 
 // ─── AUTH MODEL ───────────────────────────────────────────
 const AuthModel = {
