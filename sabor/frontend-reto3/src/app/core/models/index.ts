@@ -6,8 +6,8 @@ export interface Usuario        { id: number; nombre: string; email: string; rol
 
 // ── CATÁLOGO ─────────────────────────────────────────────
 export interface CategoriaPlato { id: number; nombre: string; }
-export interface Plato          { id: number; nombre: string; descripcion?: string; precio: number; stock: number; disponible: boolean; imagenUrl?: string; categoriaId: number; categoria?: CategoriaPlato; createdAt?: string; }
-export interface CreatePlatoDto { nombre: string; descripcion?: string; precio: number; stock?: number; categoriaId: number; imagenUrl?: string; }
+export interface Plato          { id: number; nombre: string; descripcion?: string; precio: number; disponible: boolean; imagenUrl?: string; categoriaId: number; categoria?: CategoriaPlato; createdAt?: string; }
+export interface CreatePlatoDto { nombre: string; descripcion?: string; precio: number; categoriaId: number; imagenUrl?: string; }
 
 // ── PEDIDOS ──────────────────────────────────────────────
 export type EstadoPedido = 'pendiente'|'en_preparacion'|'listo'|'entregado'|'cancelado';
