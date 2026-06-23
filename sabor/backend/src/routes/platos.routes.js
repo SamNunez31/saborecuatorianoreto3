@@ -49,8 +49,8 @@ router.post('/', authMiddleware, adminMiddleware,
   validate,
   async (req, res, next) => {
     try {
-      const { categoriaId, nombre, descripcion, precio, stock=100, imagenUrl } = req.body;
-      const plato = await prisma.plato.create({ data:{ categoriaId:+categoriaId, nombre, descripcion, precio:+precio, stock:+stock, imagenUrl } });
+      const { categoriaId, nombre, descripcion, precio, imagenUrl } = req.body;
+      const plato = await prisma.plato.create({ data:{ categoriaId:+categoriaId, nombre, descripcion, precio:+precio, imagenUrl } });
       res.status(201).json(plato);
     } catch(e) { next(e); }
   }
@@ -62,10 +62,10 @@ router.put('/:id', authMiddleware, adminMiddleware,
   validate,
   async (req, res, next) => {
     try {
-      const { nombre, descripcion, precio, disponible, categoriaId, stock, imagenUrl } = req.body;
+      const { nombre, descripcion, precio, disponible, categoriaId, imagenUrl } = req.body;
       const plato = await prisma.plato.update({
         where:{ id:parseInt(req.params.id) },
-        data:{ nombre, descripcion, precio:precio?+precio:undefined, disponible, categoriaId:categoriaId?+categoriaId:undefined, stock:stock?+stock:undefined, imagenUrl }
+        data:{ nombre, descripcion, precio:precio?+precio:undefined, disponible, categoriaId:categoriaId?+categoriaId:undefined, imagenUrl }
       });
       res.json(plato);
     } catch(e) { next(e); }

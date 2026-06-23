@@ -37,8 +37,12 @@ import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
                 <td class="fw-bold text-success">{{ p.precio | currency:'USD' }}</td>
                 <td>@if (p.disponible) { <i class="bi bi-check-circle-fill text-success"></i> }</td>
                 <td class="text-end">
-                  <button class="btn btn-sm btn-outline-primary me-1" (click)="editar(p)">Editar</button>
-                  <button class="btn btn-sm btn-outline-danger" (click)="eliminar(p.id)">Eliminar</button>
+                  <button class="btn btn-sm btn-outline-primary rounded-pill me-2 px-3" (click)="editar(p)" aria-label="Editar plato">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3" (click)="eliminar(p.id)" aria-label="Eliminar plato">
+                    <i class="bi bi-trash me-1"></i>Eliminar
+                  </button>
                 </td>
               </tr>
             }
@@ -90,20 +94,14 @@ import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
                   <label for="pDesc" class="form-label fw-semibold" style="font-size:13px">Descripción</label>
                   <textarea id="pDesc" class="form-control" formControlName="descripcion" rows="2"></textarea>
                 </div>
-                <!-- Precio + Stock -->
-                <div class="row g-3 mb-3">
-                  <div class="col-6">
-                    <label for="pPrecio" class="form-label fw-semibold" style="font-size:13px">Precio (USD) *</label>
-                    <input id="pPrecio" type="number" class="form-control" formControlName="precio" step="0.50" min="0" placeholder="8.50"
-                           [class.is-invalid]="f['precio'].invalid && f['precio'].touched">
-                    @if (f['precio'].invalid && f['precio'].touched) {
-                      <div class="invalid-feedback" role="alert">Precio inválido.</div>
-                    }
-                  </div>
-                  <div class="col-6">
-                    <label for="pStock" class="form-label fw-semibold" style="font-size:13px">Stock</label>
-                    <input id="pStock" type="number" class="form-control" formControlName="stock" min="0" placeholder="100">
-                  </div>
+                <!-- Precio -->
+                <div class="mb-3">
+                  <label for="pPrecio" class="form-label fw-semibold" style="font-size:13px">Precio (USD) *</label>
+                  <input id="pPrecio" type="number" class="form-control" formControlName="precio" step="0.50" min="0" placeholder="8.50"
+                         [class.is-invalid]="f['precio'].invalid && f['precio'].touched">
+                  @if (f['precio'].invalid && f['precio'].touched) {
+                    <div class="invalid-feedback" role="alert">Precio inválido.</div>
+                  }
                 </div>
                 <!-- Imagen -->
                 <div class="mb-4">
@@ -147,7 +145,6 @@ export class PlatosAdminComponent implements OnInit {
     nombre:      ['', Validators.required],
     descripcion: [''],
     precio:      [null as number | null, [Validators.required, Validators.min(0.01)]],
-    stock:       [100],
     imagenUrl:   ['']
   });
   get f() { return this.platoForm.controls; }
@@ -158,11 +155,11 @@ export class PlatosAdminComponent implements OnInit {
   }
   load(): void { this.loading.set(true); this.svc.getAll().subscribe({ next: p => { this.platos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) }); }
 
-  abrirModal(): void { this.editando.set(null); this.previewImg.set(''); this.platoForm.reset({ stock: 100 }); this.modalOpen.set(true); }
+  abrirModal(): void { this.editando.set(null); this.previewImg.set(''); this.platoForm.reset(); this.modalOpen.set(true); }
   editar(p: Plato): void {
     this.editando.set(p);
     this.previewImg.set(p.imagenUrl || '');
-    this.platoForm.patchValue({ categoriaId: p.categoriaId, nombre: p.nombre, descripcion: p.descripcion || '', precio: p.precio, stock: p.stock, imagenUrl: p.imagenUrl || '' });
+    this.platoForm.patchValue({ categoriaId: p.categoriaId, nombre: p.nombre, descripcion: p.descripcion || '', precio: p.precio, imagenUrl: p.imagenUrl || '' });
     this.modalOpen.set(true);
   }
   cerrarModal(): void { this.modalOpen.set(false); this.editando.set(null); this.previewImg.set(''); }
@@ -183,13 +180,13 @@ export class PlatosAdminComponent implements OnInit {
     if (this.platoForm.invalid) { this.platoForm.markAllAsTouched(); return; }
     this.saving.set(true);
     const v = this.platoForm.value;
-    const data: CreatePlatoDto = { categoriaId: +v.categoriaId!, nombre: v.nombre!, descripcion: v.descripcion || undefined, precio: +v.precio!, stock: v.stock ?? 100, imagenUrl: v.imagenUrl || undefined };
+    const data: CreatePlatoDto = { categoriaId: +v.categoriaId!, nombre: v.nombre!, descripcion: v.descripcion || undefined, precio: +v.precio!, imagenUrl: v.imagenUrl || undefined };
     const req = this.editando()
       ? this.svc.update(this.editando()!.id, data)
       : this.svc.create(data);
     req.subscribe({
       next: () => { this.toast.success(this.editando() ? 'Plato actualizado' : 'Plato creado'); this.cerrarModal(); this.load(); this.saving.set(false); },
-      error: (e) => { this.toast.error(e.error?.error || 'Error'); this.saving.set(false); }
+      error: (e) => { this.toast.error(e.error?.error || 'No se pudo guardar el plato. Intenta de nuevo.'); this.saving.set(false); }
     });
   }
 
