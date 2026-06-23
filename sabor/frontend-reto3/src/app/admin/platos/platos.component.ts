@@ -103,17 +103,18 @@ import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
                     <div class="invalid-feedback" role="alert">Precio inválido.</div>
                   }
                 </div>
-                <!-- Imagen -->
+                <!-- Imagen URL -->
                 <div class="mb-4">
-                  <label for="pImgFile" class="form-label fw-semibold" style="font-size:13px">Imagen</label>
-                  @if (previewImg()) {
+                  <label for="pImgUrl" class="form-label fw-semibold" style="font-size:13px">URL de imagen</label>
+                  @if (f['imagenUrl'].value) {
                     <div class="mb-2 rounded-3 overflow-hidden" style="height:120px">
-                      <img [src]="previewImg()" alt="Vista previa" style="width:100%;height:100%;object-fit:cover">
+                      <img [src]="f['imagenUrl'].value" alt="Vista previa" style="width:100%;height:100%;object-fit:cover"
+                           (error)="f['imagenUrl'].setValue('')">
                     </div>
                   }
-                  <input id="pImgFile" type="file" class="form-control" accept="image/*"
-                         (change)="onFileChange($event)" style="font-size:13px">
-                  <div class="form-text" style="font-size:11px">JPG, PNG o WebP. Se guarda embebida en la base de datos.</div>
+                  <input id="pImgUrl" type="url" class="form-control" formControlName="imagenUrl"
+                         placeholder="https://ejemplo.com/imagen.jpg" style="font-size:13px">
+                  <div class="form-text" style="font-size:11px">Pega una URL pública de imagen (JPG, PNG o WebP).</div>
                 </div>
                 <button type="submit" class="btn btn-dorado w-100 fw-semibold" [disabled]="saving()">
                   @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> Guardando... }
@@ -138,7 +139,6 @@ export class PlatosAdminComponent implements OnInit {
   modalOpen  = signal(false);
   editando   = signal<Plato | null>(null);
   saving     = signal(false);
-  previewImg = signal<string>('');
 
   platoForm = this.fb.group({
     categoriaId: ['' as string | number, Validators.required],
@@ -155,26 +155,13 @@ export class PlatosAdminComponent implements OnInit {
   }
   load(): void { this.loading.set(true); this.svc.getAll().subscribe({ next: p => { this.platos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) }); }
 
-  abrirModal(): void { this.editando.set(null); this.previewImg.set(''); this.platoForm.reset(); this.modalOpen.set(true); }
+  abrirModal(): void { this.editando.set(null); this.platoForm.reset(); this.modalOpen.set(true); }
   editar(p: Plato): void {
     this.editando.set(p);
-    this.previewImg.set(p.imagenUrl || '');
     this.platoForm.patchValue({ categoriaId: p.categoriaId, nombre: p.nombre, descripcion: p.descripcion || '', precio: p.precio, imagenUrl: p.imagenUrl || '' });
     this.modalOpen.set(true);
   }
-  cerrarModal(): void { this.modalOpen.set(false); this.editando.set(null); this.previewImg.set(''); }
-
-  onFileChange(e: Event): void {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target?.result as string;
-      this.previewImg.set(base64);
-      this.platoForm.patchValue({ imagenUrl: base64 });
-    };
-    reader.readAsDataURL(file);
-  }
+  cerrarModal(): void { this.modalOpen.set(false); this.editando.set(null); }
 
   guardar(): void {
     if (this.platoForm.invalid) { this.platoForm.markAllAsTouched(); return; }
