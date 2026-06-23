@@ -50,7 +50,16 @@ router.post('/', authMiddleware, adminMiddleware,
   async (req, res, next) => {
     try {
       const { categoriaId, nombre, descripcion, precio, imagenUrl } = req.body;
-      const plato = await prisma.plato.create({ data:{ categoriaId:+categoriaId, nombre, descripcion, precio:+precio, imagenUrl, disponible:true } });
+      const plato = await prisma.plato.create({
+        data: {
+          categoriaId: +categoriaId,
+          nombre,
+          descripcion,
+          precio: +precio,
+          imagenUrl,
+          disponible: true
+        }
+      });
       res.status(201).json(plato);
     } catch(e) { next(e); }
   }
@@ -65,7 +74,14 @@ router.put('/:id', authMiddleware, adminMiddleware,
       const { nombre, descripcion, precio, disponible, categoriaId, imagenUrl } = req.body;
       const plato = await prisma.plato.update({
         where:{ id:parseInt(req.params.id) },
-        data:{ nombre, descripcion, precio:precio?+precio:undefined, disponible, categoriaId:categoriaId?+categoriaId:undefined, imagenUrl }
+        data:{
+          nombre,
+          descripcion,
+          precio: precio ? +precio : undefined,
+          disponible,
+          categoriaId: categoriaId ? +categoriaId : undefined,
+          imagenUrl
+        }
       });
       res.json(plato);
     } catch(e) { next(e); }
