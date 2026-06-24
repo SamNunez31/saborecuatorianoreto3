@@ -1,9 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { PlatosService } from '../../core/services/api.services';
 import { ToastService } from '../../core/services/toast.service';
 import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
+
+const SUPABASE_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJremNybHN0cG5yYXBxbWRudmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NzUwNDMsImV4cCI6MjA5NjQ1MTA0M30.uI0qF8dhPjcNmu2wQI_oIbH_4rXRnQJ6rylQgmEQdCQ';
+const SUPABASE_UPLOAD = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/object/platos/';
+const SUPABASE_PUBLIC = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/object/public/platos/';
 
 @Component({
   selector: 'app-platos-admin',
@@ -14,6 +18,15 @@ import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
       <div class="d-flex justify-content-between align-items-start mb-4">
         <div><h1 style="font-family:var(--se-serif);font-size:1.8rem">Platos</h1><p class="text-muted">Menú del restaurante</p></div>
         <button class="btn btn-dorado" (click)="abrirModal()" aria-label="Agregar nuevo plato">+ Agregar plato</button>
+      </div>
+
+      <!-- BÚSQUEDA -->
+      <div class="mb-3">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" class="form-control border-start-0" placeholder="Buscar plato por nombre..."
+                 [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" aria-label="Buscar plato">
+        </div>
       </div>
 
       @if (loading()) { <div class="text-center py-5"><div class="spinner-border" style="color:var(--se-dorado)"></div></div> }
@@ -30,7 +43,7 @@ import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
             </tr>
           </thead>
           <tbody>
-            @for (p of platos(); track p.id) {
+            @for (p of platosFiltrados(); track p.id) {
               <tr>
                 <td class="fw-semibold">{{ p.nombre }}</td>
                 <td><span class="badge text-bg-secondary">{{ p.categoria?.nombre }}</span></td>
@@ -46,8 +59,10 @@ import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
                 </td>
               </tr>
             }
-            @if (!loading() && platos().length === 0) {
-              <tr><td colspan="5" class="text-center py-5 text-muted">Sin platos disponibles.</td></tr>
+            @if (!loading() && platosFiltrados().length === 0) {
+              <tr><td colspan="5" class="text-center py-5 text-muted">
+                {{ busqueda() ? 'No se encontraron platos con "' + busqueda() + '".' : 'Sin platos disponibles.' }}
+              </td></tr>
             }
           </tbody>
         </table>
@@ -103,20 +118,26 @@ import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
                     <div class="invalid-feedback" role="alert">Precio inválido.</div>
                   }
                 </div>
-                <!-- Imagen URL -->
+                <!-- Imagen -->
                 <div class="mb-4">
-                  <label for="pImgUrl" class="form-label fw-semibold" style="font-size:13px">URL de imagen</label>
+                  <label class="form-label fw-semibold" style="font-size:13px">Imagen</label>
                   @if (f['imagenUrl'].value) {
                     <div class="mb-2 rounded-3 overflow-hidden" style="height:120px">
                       <img [src]="f['imagenUrl'].value" alt="Vista previa" style="width:100%;height:100%;object-fit:cover"
                            (error)="f['imagenUrl'].setValue('')">
                     </div>
                   }
-                  <input id="pImgUrl" type="url" class="form-control" formControlName="imagenUrl"
-                         placeholder="https://ejemplo.com/imagen.jpg" style="font-size:13px">
-                  <div class="form-text" style="font-size:11px">Pega una URL pública de imagen (JPG, PNG o WebP).</div>
+                  <input id="pImgFile" type="file" class="form-control mb-2" accept=".jpg,.jpeg,.png,.webp"
+                         (change)="onFileChange($event)" [disabled]="uploading()" style="font-size:13px">
+                  @if (uploading()) {
+                    <div class="text-muted" style="font-size:12px"><span class="spinner-border spinner-border-sm me-1"></span>Subiendo imagen...</div>
+                  }
+                  @if (uploadError()) {
+                    <div class="text-danger" style="font-size:12px" role="alert">{{ uploadError() }}</div>
+                  }
+                  <div class="form-text" style="font-size:11px">JPG, PNG o WebP. Máximo 1 MB.</div>
                 </div>
-                <button type="submit" class="btn btn-dorado w-100 fw-semibold" [disabled]="saving()">
+                <button type="submit" class="btn btn-dorado w-100 fw-semibold" [disabled]="saving() || uploading()">
                   @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> Guardando... }
                   @else { {{ editando() ? 'Actualizar' : 'Agregar plato' }} }
                 </button>
@@ -139,6 +160,14 @@ export class PlatosAdminComponent implements OnInit {
   modalOpen  = signal(false);
   editando   = signal<Plato | null>(null);
   saving     = signal(false);
+  uploading  = signal(false);
+  uploadError = signal('');
+  busqueda   = signal('');
+
+  platosFiltrados = computed(() => {
+    const q = this.busqueda().toLowerCase().trim();
+    return q ? this.platos().filter(p => p.nombre.toLowerCase().includes(q)) : this.platos();
+  });
 
   platoForm = this.fb.group({
     categoriaId: ['' as string | number, Validators.required],
@@ -153,15 +182,41 @@ export class PlatosAdminComponent implements OnInit {
     this.svc.getCategorias().subscribe(c => this.categorias.set(c));
     this.load();
   }
-  load(): void { this.loading.set(true); this.svc.getAll().subscribe({ next: p => { this.platos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  load(): void {
+    this.loading.set(true);
+    this.svc.getAll().subscribe({ next: p => { this.platos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) });
+  }
 
-  abrirModal(): void { this.editando.set(null); this.platoForm.reset(); this.modalOpen.set(true); }
+  abrirModal(): void { this.editando.set(null); this.uploadError.set(''); this.platoForm.reset(); this.modalOpen.set(true); }
   editar(p: Plato): void {
     this.editando.set(p);
+    this.uploadError.set('');
     this.platoForm.patchValue({ categoriaId: p.categoriaId, nombre: p.nombre, descripcion: p.descripcion || '', precio: p.precio, imagenUrl: p.imagenUrl || '' });
     this.modalOpen.set(true);
   }
-  cerrarModal(): void { this.modalOpen.set(false); this.editando.set(null); }
+  cerrarModal(): void { this.modalOpen.set(false); this.editando.set(null); this.uploadError.set(''); }
+
+  async onFileChange(e: Event): Promise<void> {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (file.size > 1_000_000) { this.uploadError.set('La imagen no puede superar 1 MB.'); return; }
+    this.uploadError.set('');
+    this.uploading.set(true);
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+    try {
+      const res = await fetch(`${SUPABASE_UPLOAD}${fileName}`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type },
+        body: file
+      });
+      if (!res.ok) throw new Error();
+      this.platoForm.patchValue({ imagenUrl: `${SUPABASE_PUBLIC}${fileName}` });
+    } catch {
+      this.uploadError.set('Error al subir la imagen. Intenta de nuevo.');
+    } finally {
+      this.uploading.set(false);
+    }
+  }
 
   guardar(): void {
     if (this.platoForm.invalid) { this.platoForm.markAllAsTouched(); return; }
@@ -181,10 +236,7 @@ export class PlatosAdminComponent implements OnInit {
     const p = this.platos().find(x => x.id === id);
     if (!confirm(`¿Eliminar "${p?.nombre}"? El plato dejará de aparecer en el menú.`)) return;
     this.svc.update(id, { disponible: false }).subscribe({
-      next: () => {
-        this.toast.success(`"${p?.nombre}" eliminado del menú`);
-        this.platos.update(list => list.filter(x => x.id !== id));
-      },
+      next: () => { this.toast.success(`"${p?.nombre}" eliminado del menú`); this.platos.update(list => list.filter(x => x.id !== id)); },
       error: () => this.toast.error('Error al eliminar el plato')
     });
   }

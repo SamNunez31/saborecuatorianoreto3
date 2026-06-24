@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PlatosService } from '../../core/services/api.services';
 import { CartService } from '../../core/services/cart.service';
@@ -17,6 +17,15 @@ import { Plato, CategoriaPlato } from '../../core/models';
           <h1 style="font-family:var(--se-serif);font-size:2rem">Nuestro menú</h1>
         </header>
 
+        <!-- BÚSQUEDA -->
+        <div class="mb-3">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" class="form-control border-start-0" placeholder="Buscar en el menú..."
+                   [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" aria-label="Buscar plato">
+          </div>
+        </div>
+
         <!-- FILTROS -->
         <nav aria-label="Filtrar por categoría" class="mb-4">
           <div class="d-flex gap-2 flex-wrap" role="group" aria-label="Categorías">
@@ -34,7 +43,7 @@ import { Plato, CategoriaPlato } from '../../core/models';
         </nav>
 
         <!-- GRID PLATOS -->
-        <div class="row g-4" role="list" aria-live="polite" [attr.aria-label]="'Mostrando ' + platosFiltrados().length + ' platos'">
+        <div class="row g-4" role="list" aria-live="polite" [attr.aria-label]="'Mostrando ' + platosVisibles().length + ' platos'">
           @if (loading()) {
             @for (i of [1,2,3,4,5,6]; track i) {
               <div class="col-sm-6 col-lg-4" aria-hidden="true">
@@ -45,7 +54,7 @@ import { Plato, CategoriaPlato } from '../../core/models';
               </div>
             }
           }
-          @for (p of platosFiltrados(); track p.id) {
+          @for (p of platosVisibles(); track p.id) {
             <div class="col-sm-6 col-lg-4" role="listitem">
               <article class="plato-card card h-100 border-0 shadow-sm" [attr.aria-label]="p.nombre">
                 <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:200px" aria-hidden="true">
@@ -68,7 +77,7 @@ import { Plato, CategoriaPlato } from '../../core/models';
               </article>
             </div>
           }
-          @if (!loading() && platosFiltrados().length === 0) {
+          @if (!loading() && platosVisibles().length === 0) {
             <div class="col-12 text-center py-5 text-muted" role="status">
               <p style="font-size:40px">🍽</p>
               <p>No hay platos en esta categoría.</p>
@@ -87,12 +96,16 @@ export class MenuComponent implements OnInit {
   allPlatos  = signal<Plato[]>([]);
   categorias = signal<CategoriaPlato[]>([]);
   catActual  = signal<number | null>(null);
+  busqueda   = signal('');
   loading    = signal(true);
 
-  platosFiltrados = () => {
+  platosVisibles = computed(() => {
     const cat = this.catActual();
-    return cat === null ? this.allPlatos() : this.allPlatos().filter(p => p.categoriaId === cat);
-  };
+    const q   = this.busqueda().toLowerCase().trim();
+    return this.allPlatos()
+      .filter(p => cat === null || p.categoriaId === cat)
+      .filter(p => !q || p.nombre.toLowerCase().includes(q) || (p.descripcion || '').toLowerCase().includes(q));
+  });
 
   ngOnInit(): void {
     this.svc.getCategorias().subscribe(c => this.categorias.set(c));

@@ -72,18 +72,20 @@ Genera exactamente 3 recomendaciones concretas y accionables para mejorar las ve
 Responde ÚNICAMENTE con un JSON array válido, sin markdown, sin texto adicional:
 [{"titulo":"título corto","descripcion":"descripción concreta en máximo 2 oraciones"}]`;
 
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
-      body: JSON.stringify({ model: 'llama3-8b-8192', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 600 })
-    });
-
-    if (!groqRes.ok) throw new Error(`Groq API error: ${groqRes.status}`);
-
-    const groqData = await groqRes.json();
-    const content  = groqData.choices?.[0]?.message?.content || '[]';
-    const match    = content.match(/\[[\s\S]*\]/);
-    const recomendaciones = match ? JSON.parse(match[0]) : [];
+    let recomendaciones = [];
+    try {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
+        body: JSON.stringify({ model: 'llama3-8b-8192', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 600 })
+      });
+      if (groqRes.ok) {
+        const groqData = await groqRes.json();
+        const content  = groqData.choices?.[0]?.message?.content || '[]';
+        const match    = content.match(/\[[\s\S]*\]/);
+        if (match) recomendaciones = JSON.parse(match[0]);
+      }
+    } catch (_) { /* si Groq falla devolvemos array vacío */ }
 
     res.json({ recomendaciones });
   } catch (e) { next(e); }

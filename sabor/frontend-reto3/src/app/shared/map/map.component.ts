@@ -42,12 +42,14 @@ export class MapComponent implements AfterViewInit {
             : this.QUITO;
           map.setView(coords, 15);
           L.marker(coords).addTo(map).bindPopup(this.address).openPopup();
+          setTimeout(() => map.invalidateSize(), 200);
         },
-        error: () => { map.setView(this.QUITO, 13); L.marker(this.QUITO).addTo(map); }
+        error: () => { map.setView(this.QUITO, 13); L.marker(this.QUITO).addTo(map); setTimeout(() => map.invalidateSize(), 200); }
       });
     } else {
       map.setView(this.QUITO, 13);
       L.marker(this.QUITO).addTo(map).bindPopup('Quito, Ecuador').openPopup();
+      setTimeout(() => map.invalidateSize(), 200);
     }
   }
 }
