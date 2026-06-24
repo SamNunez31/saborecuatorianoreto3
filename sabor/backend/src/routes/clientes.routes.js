@@ -2,17 +2,10 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const validate = require('../middleware/validate');
 const { authMiddleware } = require('../middleware/auth');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const ctrl = require('../controllers/clientes.controller');
 
 // GET /api/clientes/mi-perfil
-router.get('/mi-perfil', authMiddleware, async (req, res, next) => {
-  try {
-    const cliente = await prisma.cliente.findUnique({ where: { id: req.user.clienteId } });
-    if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
-    res.json(cliente);
-  } catch (e) { next(e); }
-});
+router.get('/mi-perfil', authMiddleware, ctrl.getMiPerfil);
 
 // PUT /api/clientes/mi-perfil
 router.put('/mi-perfil', authMiddleware,
@@ -26,16 +19,7 @@ router.put('/mi-perfil', authMiddleware,
     body('direccion').optional(),
   ],
   validate,
-  async (req, res, next) => {
-    try {
-      const { nombre, apellido, telefono, direccion } = req.body;
-      const cliente = await prisma.cliente.update({
-        where: { id: req.user.clienteId },
-        data: { nombre, apellido, telefono, direccion }
-      });
-      res.json(cliente);
-    } catch (e) { next(e); }
-  }
+  ctrl.updateMiPerfil
 );
 
 module.exports = router;
