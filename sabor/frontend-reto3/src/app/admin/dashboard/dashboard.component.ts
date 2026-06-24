@@ -123,8 +123,17 @@ export class DashboardComponent implements OnInit {
     this.loadingIA.set(true);
     this.errorIA.set('');
     this.svc.getRecomendaciones().subscribe({
-      next: r => { this.recomendaciones.set(r.recomendaciones); this.loadingIA.set(false); },
-      error: () => { this.errorIA.set('No se pudieron obtener recomendaciones. Verifica la clave de Groq.'); this.loadingIA.set(false); }
+      next: r => {
+        console.log('[Groq] respuesta completa:', r);
+        console.log('[Groq] recomendaciones:', r.recomendaciones);
+        this.recomendaciones.set(r.recomendaciones ?? []);
+        this.loadingIA.set(false);
+      },
+      error: (e) => {
+        console.error('[Groq] error HTTP:', e);
+        this.errorIA.set('No se pudieron obtener recomendaciones. Verifica la clave de Groq.');
+        this.loadingIA.set(false);
+      }
     });
   }
 }
