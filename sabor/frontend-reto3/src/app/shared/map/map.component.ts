@@ -1,5 +1,14 @@
 import { Component, Input, AfterViewInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import * as L from 'leaflet';
+
+// Fix clásico de Angular + Leaflet: los iconos por defecto no resuelven correctamente
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 @Component({
   selector: 'app-map',
@@ -13,21 +22,16 @@ export class MapComponent implements AfterViewInit {
 
   private readonly QUITO: [number, number] = [-0.1807, -78.4678];
 
-  async ngAfterViewInit(): Promise<void> {
-    const L = await import('leaflet');
+  ngAfterViewInit(): void {
+    // setTimeout 300ms garantiza que el DOM esté completamente renderizado
+    setTimeout(() => this.initMap(), 300);
+  }
 
-    // Webpack/Angular rompe las rutas de los iconos por defecto; apuntamos a unpkg
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    });
-
+  private initMap(): void {
     const map = L.map(this.mapEl.nativeElement, {
-      zoomControl: true,
+      zoomControl:       true,
       attributionControl: false,
-      scrollWheelZoom: false,
+      scrollWheelZoom:   false,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
@@ -44,7 +48,11 @@ export class MapComponent implements AfterViewInit {
           L.marker(coords).addTo(map).bindPopup(this.address).openPopup();
           setTimeout(() => map.invalidateSize(), 200);
         },
-        error: () => { map.setView(this.QUITO, 13); L.marker(this.QUITO).addTo(map); setTimeout(() => map.invalidateSize(), 200); }
+        error: () => {
+          map.setView(this.QUITO, 13);
+          L.marker(this.QUITO).addTo(map);
+          setTimeout(() => map.invalidateSize(), 200);
+        }
       });
     } else {
       map.setView(this.QUITO, 13);
