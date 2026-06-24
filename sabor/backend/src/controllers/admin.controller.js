@@ -73,28 +73,29 @@ Responde ÚNICAMENTE con un JSON array válido, sin markdown, sin texto adiciona
 [{"titulo":"título corto","descripcion":"descripción concreta en máximo 2 oraciones"}]`;
 
     let recomendaciones = [];
-    console.log('GROQ_API_KEY presente:', !!process.env.GROQ_API_KEY);
+    const _debug = { keyPresente: !!process.env.GROQ_API_KEY, groqStatus: null, groqError: null, content: null };
+
     try {
       const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
         body: JSON.stringify({ model: 'llama3-8b-8192', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 600 })
       });
+
+      _debug.groqStatus = groqRes.status;
+
       if (groqRes.ok) {
         const groqData = await groqRes.json();
-        console.log('Groq raw response:', JSON.stringify(groqData));
-        const content = groqData.choices?.[0]?.message?.content || '';
-        console.log('Groq choices:', content);
+        const content  = groqData.choices?.[0]?.message?.content || '';
+        _debug.content = content;
 
         // Intentar parsear como JSON primero
         const jsonMatch = content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
-          try {
-            recomendaciones = JSON.parse(jsonMatch[0]);
-          } catch (_) { /* no era JSON válido, caemos al fallback */ }
+          try { recomendaciones = JSON.parse(jsonMatch[0]); } catch (_) {}
         }
 
-        // Fallback: el modelo devolvió texto libre — extraer por líneas numeradas
+        // Fallback: texto libre — extraer por líneas numeradas
         if (recomendaciones.length === 0 && content.trim()) {
           recomendaciones = content
             .split(/\n/)
@@ -104,11 +105,11 @@ Responde ÚNICAMENTE con un JSON array válido, sin markdown, sin texto adiciona
             .map(l => ({ titulo: l.slice(0, 60), descripcion: l }));
         }
       } else {
-        console.log('Groq HTTP error:', groqRes.status, await groqRes.text());
+        _debug.groqError = await groqRes.text();
       }
-    } catch (err) { console.log('Groq fetch error:', err.message); }
+    } catch (err) { _debug.groqError = err.message; }
 
-    res.json({ recomendaciones });
+    res.json({ recomendaciones, _debug });
   } catch (e) { next(e); }
 };
 
