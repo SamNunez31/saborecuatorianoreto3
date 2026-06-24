@@ -81,11 +81,31 @@ Responde ÚNICAMENTE con un JSON array válido, sin markdown, sin texto adiciona
       });
       if (groqRes.ok) {
         const groqData = await groqRes.json();
-        const content  = groqData.choices?.[0]?.message?.content || '[]';
-        const match    = content.match(/\[[\s\S]*\]/);
-        if (match) recomendaciones = JSON.parse(match[0]);
+        console.log('Groq raw response:', JSON.stringify(groqData));
+        const content = groqData.choices?.[0]?.message?.content || '';
+        console.log('Groq choices:', content);
+
+        // Intentar parsear como JSON primero
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          try {
+            recomendaciones = JSON.parse(jsonMatch[0]);
+          } catch (_) { /* no era JSON válido, caemos al fallback */ }
+        }
+
+        // Fallback: el modelo devolvió texto libre — extraer por líneas numeradas
+        if (recomendaciones.length === 0 && content.trim()) {
+          recomendaciones = content
+            .split(/\n/)
+            .map(l => l.replace(/^\s*\d+[\.\-\)]\s*/, '').trim())
+            .filter(l => l.length > 10)
+            .slice(0, 3)
+            .map(l => ({ titulo: l.slice(0, 60), descripcion: l }));
+        }
+      } else {
+        console.log('Groq HTTP error:', groqRes.status, await groqRes.text());
       }
-    } catch (_) { /* si Groq falla devolvemos array vacío */ }
+    } catch (err) { console.log('Groq fetch error:', err.message); }
 
     res.json({ recomendaciones });
   } catch (e) { next(e); }
