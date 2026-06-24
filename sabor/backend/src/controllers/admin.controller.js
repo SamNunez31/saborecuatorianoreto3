@@ -73,6 +73,7 @@ Responde ÚNICAMENTE con un JSON array válido, sin markdown, sin texto adiciona
 [{"titulo":"título corto","descripcion":"descripción concreta en máximo 2 oraciones"}]`;
 
     let recomendaciones = [];
+    console.log('GROQ_API_KEY presente:', !!process.env.GROQ_API_KEY);
     try {
       const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
