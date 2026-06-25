@@ -59,7 +59,9 @@ import { CarritoComponent } from '../carrito/carrito.component';
                     <li><a class="dropdown-item" routerLink="/admin"><i class="bi bi-gear me-2"></i>Panel admin</a></li>
                   }
                   <li><a class="dropdown-item" routerLink="/mis-pedidos"><i class="bi bi-box me-2"></i>Mis pedidos</a></li>
-                  <li><a class="dropdown-item" routerLink="/mi-cuenta"><i class="bi bi-credit-card me-2"></i>Mi cuenta</a></li>
+                  @if (!auth.isAdmin()) {
+                    <li><a class="dropdown-item" routerLink="/mi-cuenta"><i class="bi bi-credit-card me-2"></i>Mi cuenta</a></li>
+                  }
                   <li><hr class="dropdown-divider m-0"></li>
                   <li><button class="dropdown-item text-danger" (click)="auth.logout()"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button></li>
                 </ul>
