@@ -1,10 +1,12 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const FacturaModel = {
   getAll() {
     return prisma.factura.findMany({
-      include: { pedido: { include: { cliente: true } }, pagos: { include: { formaPago: true } } },
+      include: { 
+        pedido: { include: { cliente: true, detalles: { include: { plato: true, detalleIngredientes: { include: { ingrediente: true } } } } } }, 
+        pagos: { include: { formaPago: true } } 
+      },
       orderBy: { fechaEmision: 'desc' }
     });
   },

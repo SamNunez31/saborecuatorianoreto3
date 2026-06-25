@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const PedidoModel = {
   create(clienteId, { items, tipoEntrega, observaciones, mesaId }, mapa) {
@@ -31,11 +30,12 @@ const PedidoModel = {
   },
 
   getByClienteId(clienteId) {
+    if (!clienteId) return [];
     return prisma.pedido.findMany({
-      where: { clienteId },
+      where: { clienteId: parseInt(clienteId) },
       include: {
         cliente:  { select: { nombre: true, apellido: true, direccion: true } },
-        detalles: { include: { plato: true } },
+        detalles: { include: { plato: true, detalleIngredientes: { include: { ingrediente: true } } } },
         factura:  { include: { pagos: { include: { formaPago: true } } } }
       },
       orderBy: { fechaPedido: 'desc' }
@@ -44,7 +44,7 @@ const PedidoModel = {
 
   getAll() {
     return prisma.pedido.findMany({
-      include: { cliente: true, detalles: { include: { plato: true } }, factura: true },
+      include: { cliente: true, detalles: { include: { plato: true, detalleIngredientes: { include: { ingrediente: true } } } }, factura: true },
       orderBy: { fechaPedido: 'desc' }
     });
   },

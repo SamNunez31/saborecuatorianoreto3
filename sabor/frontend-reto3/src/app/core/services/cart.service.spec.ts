@@ -109,7 +109,7 @@ describe('CartService', () => {
 
   it('debe cargar el carrito desde localStorage al iniciar', () => {
     localStorage.setItem('se_carrito', JSON.stringify([{ id:1, nombre:'Seco de pollo', precio:9.50, cantidad:3 }]));
-    const newService = TestBed.inject(CartService);
+    const newService = new CartService();
     expect(newService.items().length).toBe(1);
     expect(newService.count()).toBe(3);
   });

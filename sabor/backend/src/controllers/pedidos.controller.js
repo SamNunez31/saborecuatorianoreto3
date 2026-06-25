@@ -1,7 +1,6 @@
 const PedidoModel  = require('../models/pedido.model');
 const FacturaModel = require('../models/factura.model');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const create = async (req, res, next) => {
   try {
@@ -26,8 +25,12 @@ const create = async (req, res, next) => {
 
 const getMisPedidos = async (req, res, next) => {
   try {
-    console.log('clienteId:', req.user.clienteId);
-    res.json(await PedidoModel.getByClienteId(req.user.clienteId));
+    const clienteId = req.user?.clienteId;
+    if (!clienteId) {
+      return res.json([]);
+    }
+    console.log('clienteId:', clienteId);
+    res.json(await PedidoModel.getByClienteId(parseInt(clienteId)));
   } catch (e) { next(e); }
 };
 

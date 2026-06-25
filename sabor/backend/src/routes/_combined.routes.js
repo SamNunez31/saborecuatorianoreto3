@@ -1,8 +1,7 @@
 // ── FACTURAS ─────────────────────────────────────────────
 const factRouter = require('express').Router();
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 factRouter.get('/', authMiddleware, adminMiddleware, async (req, res, next) => {
   try {

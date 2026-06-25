@@ -8,13 +8,18 @@ import { ToastService } from '../../core/services/toast.service';
 import { Tarjeta } from '../../core/models';
 import { environment } from '../../../environments/environment';
 
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-mi-cuenta',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <main style="padding-top:80px;min-height:100vh;background:var(--se-crema)">
       <div class="container py-5" style="max-width:760px">
+        <a routerLink="/" class="text-decoration-none d-inline-flex align-items-center mb-3" style="color:var(--se-dorado);font-weight:600">
+          <i class="bi bi-arrow-left me-2"></i>Volver a la tienda
+        </a>
         <div class="mb-4"><span class="eyebrow d-block mb-1">Perfil</span><h1 style="font-family:var(--se-serif);font-size:1.8rem">Mi cuenta</h1></div>
 
         <!-- TABS -->

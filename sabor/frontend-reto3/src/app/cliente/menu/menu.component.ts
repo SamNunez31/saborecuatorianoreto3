@@ -224,8 +224,11 @@ export class MenuComponent implements OnInit {
   agregarConPersonalizacion(): void {
     const p = this.platoModal();
     if (!p) return;
-    const removidos = Array.from(this.ingredientesRemovidosSet());
-    for (let i = 0; i < this.qtyModal(); i++) this.cart.add(p, i === 0 ? removidos : []);
+    const removidosIds = Array.from(this.ingredientesRemovidosSet());
+    const nombresRemovidos = p.platoIngredientes
+       ?.filter(pi => removidosIds.includes(pi.ingredienteId))
+       .map(pi => pi.ingrediente.nombre) || [];
+    for (let i = 0; i < this.qtyModal(); i++) this.cart.add(p, removidosIds, nombresRemovidos);
     this.toast.success(`${p.nombre} agregado al carrito`);
     this.cerrarModal();
   }

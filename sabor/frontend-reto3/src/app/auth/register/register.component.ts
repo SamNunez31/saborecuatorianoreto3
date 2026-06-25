@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -115,9 +115,10 @@ function passwordsMatch(c: AbstractControl): ValidationErrors | null {
   `
 })
 export class RegisterComponent {
-  private fb    = inject(FormBuilder);
-  private auth  = inject(AuthService);
-  private toast = inject(ToastService);
+  private fb     = inject(FormBuilder);
+  private auth   = inject(AuthService);
+  private toast  = inject(ToastService);
+  private router = inject(Router);
   loading = false;
 
   private readonly LETRAS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
@@ -140,8 +141,13 @@ export class RegisterComponent {
     this.loading = true;
     const { passwordConfirm, ...rest } = this.registerForm.value;
     this.auth.register(rest as { nombre: string; apellido: string; email: string; password: string; telefono?: string; direccion?: string }).subscribe({
-      next: (r) => { this.toast.success(`¡Cuenta creada! Bienvenido, ${r.usuario.nombre}`); },
+      next: (r) => {
+        this.loading = false;
+        this.toast.success(`¡Cuenta creada! Bienvenido, ${r.usuario.nombre}`);
+        this.router.navigate(['/menu']);
+      },
       error: (e) => { this.toast.error(e.error?.error || 'Error al crear cuenta'); this.loading = false; }
     });
   }
 }
+

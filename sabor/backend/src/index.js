@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config(); // Loaded environment variables
 const express  = require('express');
 const cors     = require('cors');
 const morgan   = require('morgan');

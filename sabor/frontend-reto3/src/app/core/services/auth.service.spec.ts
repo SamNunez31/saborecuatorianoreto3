@@ -13,13 +13,14 @@ describe('AuthService', () => {
   const mockResponse = { token: mockToken, usuario: mockUser };
 
   beforeEach(() => {
+    localStorage.clear();
+    document.cookie = 'sabor_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, RouterTestingModule],
       providers: [AuthService]
     });
     service = TestBed.inject(AuthService);
     http    = TestBed.inject(HttpTestingController);
-    localStorage.clear();
   });
 
   afterEach(() => { http.verify(); localStorage.clear(); });

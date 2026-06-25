@@ -7,6 +7,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest, RegisterRequest, Usuario } from '../models';
 
+import { CartService } from './cart.service';
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly TOKEN_KEY  = 'se_token';
@@ -15,7 +17,7 @@ export class AuthService {
 
   currentUser = signal<Usuario | null>(this._loadUser());
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private cart: CartService) {
     this.loadUserFromCookie();
   }
 
@@ -30,6 +32,7 @@ export class AuthService {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this._deleteCookie(this.COOKIE_NAME);
+    this.cart.clear();
     this.currentUser.set(null);
     this.router.navigate(['/auth/login']);
   }

@@ -11,31 +11,79 @@ export class CartService {
   iva      = computed(() => this.subtotal() * 0.15);
   total    = computed(() => this.subtotal() + this.iva());
 
-  add(plato: { id: number; nombre: string; precio: number }, ingredientesRemovidos: number[] = []): void {
+  private getCustomKey(id: number, ingredientesRemovidos: number[] = []): string {
+    const sorted = [...ingredientesRemovidos].sort((a, b) => a - b);
+    return `${id}_${sorted.join('-')}`;
+  }
+
+  add(plato: { id: number; nombre: string; precio: number }, ingredientesRemovidos: number[] = [], nombresRemovidos: string[] = []): void {
     const items = [...this.items()];
-    const found = items.find(i => i.id === plato.id);
+    const key = this.getCustomKey(plato.id, ingredientesRemovidos);
+    const found = items.find(i => (i.customKey || this.getCustomKey(i.id, i.ingredientesRemovidos || [])) === key);
     if (found) {
       found.cantidad++;
-      if (!found.ingredientesRemovidos?.length && ingredientesRemovidos.length) {
-        found.ingredientesRemovidos = ingredientesRemovidos;
-      }
     } else {
       items.push({
-        id: plato.id, nombre: plato.nombre, precio: Number(plato.precio), cantidad: 1,
-        ...(ingredientesRemovidos.length ? { ingredientesRemovidos } : {})
+        id: plato.id,
+        nombre: plato.nombre,
+        precio: Number(plato.precio),
+        cantidad: 1,
+        ingredientesRemovidos: [...ingredientesRemovidos].sort((a, b) => a - b),
+        nombresRemovidos: [...nombresRemovidos],
+        customKey: key
       });
     }
     this._save(items);
   }
-  inc(id: number): void { this._mutate(id, i => i.cantidad++); }
-  dec(id: number): void { const items = this.items().map(i => i.id === id ? { ...i, cantidad: i.cantidad - 1 } : i).filter(i => i.cantidad > 0); this._save(items); }
-  remove(id: number): void { this._save(this.items().filter(i => i.id !== id)); }
-  clear(): void { this._save([]); }
 
-  private _mutate(id: number, fn: (i: CartItem) => void): void {
-    const items = this.items().map(i => { if (i.id === id) { const copy = { ...i }; fn(copy); return copy; } return i; });
+  inc(idOrKey: number | string): void {
+    const key = typeof idOrKey === 'number' ? this.getCustomKey(idOrKey) : idOrKey;
+    this._mutate(key, i => i.cantidad++);
+  }
+
+  dec(idOrKey: number | string): void {
+    const key = typeof idOrKey === 'number' ? this.getCustomKey(idOrKey) : idOrKey;
+    const items = this.items()
+      .map(i => {
+        const itemKey = i.customKey || this.getCustomKey(i.id, i.ingredientesRemovidos);
+        return itemKey === key ? { ...i, cantidad: i.cantidad - 1 } : i;
+      })
+      .filter(i => i.cantidad > 0);
     this._save(items);
   }
+
+  remove(idOrKey: number | string): void {
+    const key = typeof idOrKey === 'number' ? this.getCustomKey(idOrKey) : idOrKey;
+    this._save(this.items().filter(i => (i.customKey || this.getCustomKey(i.id, i.ingredientesRemovidos)) !== key));
+  }
+
+  clear(): void { this._save([]); }
+
+  private _mutate(key: string, fn: (i: CartItem) => void): void {
+    const items = this.items().map(i => {
+      const itemKey = i.customKey || this.getCustomKey(i.id, i.ingredientesRemovidos);
+      if (itemKey === key) {
+        const copy = { ...i };
+        fn(copy);
+        return copy;
+      }
+      return i;
+    });
+    this._save(items);
+  }
+
   private _save(items: CartItem[]): void { localStorage.setItem(this.KEY, JSON.stringify(items)); this.items.set(items); }
-  private _load(): CartItem[] { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { return []; } }
+
+  private _load(): CartItem[] {
+    try {
+      const items = JSON.parse(localStorage.getItem(this.KEY) || '[]');
+      return items.map((i: any) => ({
+        ...i,
+        customKey: i.customKey || this.getCustomKey(i.id, i.ingredientesRemovidos)
+      }));
+    } catch (e) {
+      console.error('Error loading cart:', e);
+      return [];
+    }
+  }
 }

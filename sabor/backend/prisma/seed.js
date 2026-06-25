@@ -43,34 +43,172 @@ async function main() {
   await prisma.plato.createMany({ data: platos, skipDuplicates: true });
   console.log('✓ Platos');
 
+  // ── Ingredientes ────────────────────────────────────────
+  const ingredientesData = [
+    { nombre: 'Cebolla',      tipo: 'vegetal' },
+    { nombre: 'Cilantro',     tipo: 'hierba' },
+    { nombre: 'Limón',        tipo: 'cítrico' },
+    { nombre: 'Ají',          tipo: 'condimento' },
+    { nombre: 'Tomate',       tipo: 'vegetal' },
+    { nombre: 'Queso',        tipo: 'lácteo' },
+    { nombre: 'Arroz',        tipo: 'cereal' },
+    { nombre: 'Maduro',       tipo: 'fruta' },
+    { nombre: 'Menestra',     tipo: 'legumbre' },
+    { nombre: 'Papa',         tipo: 'tubérculo' },
+    { nombre: 'Yuca',         tipo: 'tubérculo' },
+    { nombre: 'Chorizo',      tipo: 'cárnico' },
+    { nombre: 'Encurtido',    tipo: 'acompañamiento' },
+    { nombre: 'Canela',       tipo: 'especia' },
+    { nombre: 'Azúcar',       tipo: 'endulzante' },
+  ];
+
+  for (const ing of ingredientesData) {
+    const exists = await prisma.ingrediente.findFirst({ where: { nombre: ing.nombre } });
+    if (!exists) await prisma.ingrediente.create({ data: ing });
+  }
+
+  const ingredientes = Object.fromEntries(
+    (await prisma.ingrediente.findMany()).map(i => [i.nombre, i.id])
+  );
+  console.log('✓ Ingredientes');
+
+  // ── PlatoIngredientes (relación plato ↔ ingrediente) ───
+  const platosDb = Object.fromEntries(
+    (await prisma.plato.findMany()).map(p => [p.nombre, p.id])
+  );
+
+  const platoIngredientesData = [
+    // Ceviche de camarón
+    { platoId: platosDb['Ceviche de camarón'], ingredienteId: ingredientes['Cebolla'],  esRemovible: true  },
+    { platoId: platosDb['Ceviche de camarón'], ingredienteId: ingredientes['Cilantro'], esRemovible: true  },
+    { platoId: platosDb['Ceviche de camarón'], ingredienteId: ingredientes['Limón'],    esRemovible: false },
+    { platoId: platosDb['Ceviche de camarón'], ingredienteId: ingredientes['Ají'],      esRemovible: true  },
+    { platoId: platosDb['Ceviche de camarón'], ingredienteId: ingredientes['Tomate'],   esRemovible: true  },
+
+    // Empanadas de viento
+    { platoId: platosDb['Empanadas de viento'], ingredienteId: ingredientes['Queso'],   esRemovible: false },
+    { platoId: platosDb['Empanadas de viento'], ingredienteId: ingredientes['Azúcar'],  esRemovible: true  },
+
+    // Sopa de quinua
+    { platoId: platosDb['Sopa de quinua'], ingredienteId: ingredientes['Papa'],     esRemovible: true  },
+    { platoId: platosDb['Sopa de quinua'], ingredienteId: ingredientes['Cilantro'], esRemovible: true  },
+    { platoId: platosDb['Sopa de quinua'], ingredienteId: ingredientes['Queso'],    esRemovible: true  },
+
+    // Caldo de gallina criolla
+    { platoId: platosDb['Caldo de gallina criolla'], ingredienteId: ingredientes['Papa'],     esRemovible: true  },
+    { platoId: platosDb['Caldo de gallina criolla'], ingredienteId: ingredientes['Cilantro'], esRemovible: true  },
+    { platoId: platosDb['Caldo de gallina criolla'], ingredienteId: ingredientes['Cebolla'],  esRemovible: true  },
+    { platoId: platosDb['Caldo de gallina criolla'], ingredienteId: ingredientes['Arroz'],    esRemovible: true  },
+
+    // Seco de pollo
+    { platoId: platosDb['Seco de pollo'], ingredienteId: ingredientes['Arroz'],    esRemovible: false },
+    { platoId: platosDb['Seco de pollo'], ingredienteId: ingredientes['Menestra'], esRemovible: true  },
+    { platoId: platosDb['Seco de pollo'], ingredienteId: ingredientes['Maduro'],   esRemovible: true  },
+    { platoId: platosDb['Seco de pollo'], ingredienteId: ingredientes['Ají'],      esRemovible: true  },
+
+    // Fritada con llapingachos
+    { platoId: platosDb['Fritada con llapingachos'], ingredienteId: ingredientes['Papa'],      esRemovible: false },
+    { platoId: platosDb['Fritada con llapingachos'], ingredienteId: ingredientes['Encurtido'], esRemovible: true  },
+    { platoId: platosDb['Fritada con llapingachos'], ingredienteId: ingredientes['Maduro'],    esRemovible: true  },
+    { platoId: platosDb['Fritada con llapingachos'], ingredienteId: ingredientes['Ají'],       esRemovible: true  },
+
+    // Bandeja montañera
+    { platoId: platosDb['Bandeja montañera'], ingredienteId: ingredientes['Arroz'],    esRemovible: false },
+    { platoId: platosDb['Bandeja montañera'], ingredienteId: ingredientes['Menestra'], esRemovible: true  },
+    { platoId: platosDb['Bandeja montañera'], ingredienteId: ingredientes['Maduro'],   esRemovible: true  },
+    { platoId: platosDb['Bandeja montañera'], ingredienteId: ingredientes['Chorizo'],  esRemovible: true  },
+
+    // Encebollado de atún
+    { platoId: platosDb['Encebollado de atún'], ingredienteId: ingredientes['Yuca'],    esRemovible: false },
+    { platoId: platosDb['Encebollado de atún'], ingredienteId: ingredientes['Cebolla'], esRemovible: true  },
+    { platoId: platosDb['Encebollado de atún'], ingredienteId: ingredientes['Cilantro'],esRemovible: true  },
+    { platoId: platosDb['Encebollado de atún'], ingredienteId: ingredientes['Ají'],     esRemovible: true  },
+
+    // Tres leches
+    { platoId: platosDb['Tres leches'], ingredienteId: ingredientes['Canela'],  esRemovible: true  },
+
+    // Espumilla de guanábana
+    { platoId: platosDb['Espumilla de guanábana'], ingredienteId: ingredientes['Azúcar'],  esRemovible: false },
+    { platoId: platosDb['Espumilla de guanábana'], ingredienteId: ingredientes['Canela'],  esRemovible: true  },
+
+    // Jugo de naranjilla
+    { platoId: platosDb['Jugo de naranjilla'], ingredienteId: ingredientes['Azúcar'],  esRemovible: true  },
+
+    // Colada morada
+    { platoId: platosDb['Colada morada'], ingredienteId: ingredientes['Canela'],  esRemovible: false },
+    { platoId: platosDb['Colada morada'], ingredienteId: ingredientes['Azúcar'],  esRemovible: true  },
+  ];
+
+  // Limpiar relaciones antiguas y crear nuevas
+  await prisma.platoIngrediente.deleteMany({});
+  await prisma.platoIngrediente.createMany({ data: platoIngredientesData, skipDuplicates: true });
+  console.log('✓ PlatoIngredientes');
+
   // Admin
   const adminRol = await prisma.role.findUnique({ where:{nombre:'admin'} });
   const adminHash = await bcrypt.hash('admin123', 10);
-  await prisma.usuario.upsert({
-    where:{email:'admin@sabor.ec'}, update:{},
+  const adminUser = await prisma.usuario.upsert({
+    where:{email:'admin@sabor.ec'},
+    update:{ nombre:'Administrador', rolId:adminRol.id },
     create:{
       nombre:'Administrador', email:'admin@sabor.ec',
       passwordHash:adminHash, rolId:adminRol.id,
       cliente:{ create:{ nombre:'Administrador', apellido:'Sistema' } }
-    }
+    },
+    include: { cliente: true }
   });
+  if (!adminUser.cliente) {
+    await prisma.cliente.create({ data: { usuarioId: adminUser.id, nombre: 'Administrador', apellido: 'Sistema' } });
+  }
 
   // Cliente de prueba
   const clienteRol = await prisma.role.findUnique({ where:{nombre:'cliente'} });
   const clienteHash = await bcrypt.hash('cliente123', 10);
-  await prisma.usuario.upsert({
-    where:{email:'cliente@prueba.ec'}, update:{},
+  const clienteUser = await prisma.usuario.upsert({
+    where:{email:'cliente@prueba.ec'},
+    update:{ nombre:'María', rolId:clienteRol.id },
     create:{
       nombre:'María', email:'cliente@prueba.ec',
       passwordHash:clienteHash, rolId:clienteRol.id,
       cliente:{ create:{ nombre:'María', apellido:'González', telefono:'0999123456', direccion:'Av. Colón N12-34, Quito' } }
-    }
+    },
+    include: { cliente: true }
   });
+  if (!clienteUser.cliente) {
+    await prisma.cliente.create({
+      data: {
+        usuarioId: clienteUser.id,
+        nombre: 'María',
+        apellido: 'González',
+        telefono: '0999123456',
+        direccion: 'Av. Colón N12-34, Quito'
+      }
+    });
+  }
 
   console.log('✓ Usuarios creados');
+
+  // Mesas
+  const mesas = [
+    { numero: 1, capacidad: 2, estado: 'disponible', descripcion: 'Mesa para parejas junto a la ventana' },
+    { numero: 2, capacidad: 4, estado: 'disponible', descripcion: 'Mesa familiar central' },
+    { numero: 3, capacidad: 4, estado: 'disponible', descripcion: 'Mesa familiar junto al bar' },
+    { numero: 4, capacidad: 6, estado: 'disponible', descripcion: 'Mesa grande terraza' },
+    { numero: 5, capacidad: 2, estado: 'disponible', descripcion: 'Mesa pequeña terraza' }
+  ];
+  for (const m of mesas) {
+    await prisma.mesa.upsert({
+      where: { numero: m.numero },
+      update: {},
+      create: m
+    });
+  }
+  console.log('✓ Mesas');
+
   console.log('\n✅ Seed completado');
   console.log('   admin@sabor.ec     / admin123');
   console.log('   cliente@prueba.ec  / cliente123');
 }
 
 main().catch(e=>{console.error(e);process.exit(1);}).finally(()=>prisma.$disconnect());
+

@@ -1,6 +1,5 @@
 const ClienteModel = require('../models/cliente.model');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const getDashboard = async (req, res, next) => {
   try {

@@ -38,7 +38,18 @@ import { Pedido, EstadoPedido } from '../../core/models';
                 <td style="font-size:13px">{{ p.cliente?.nombre }} {{ p.cliente?.apellido }}</td>
                 <td class="text-center" style="font-size:20px" [attr.title]="p.tipoEntrega">{{ p.tipoEntrega === 'domicilio' ? '🛵' : '🏪' }}</td>
                 <td>
-                  <span class="d-block text-truncate text-muted" style="font-size:12px;max-width:160px">{{ platosResumen(p) }}</span>
+                  <div style="font-size:12px; line-height:1.4; max-width:280px;">
+                    @for (d of p.detalles; track d.id) {
+                      <div class="mb-1 text-muted">
+                        <span class="fw-medium text-dark">{{ d.cantidad }}x {{ d.plato?.nombre }}</span>
+                        @if (d.detalleIngredientes && d.detalleIngredientes.length > 0) {
+                          <div class="text-danger" style="font-size:11px">
+                            <i class="bi bi-x-circle me-1" style="font-size:10px"></i>Sin: {{ obtenerNombresIngredientes(d) }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
                 </td>
                 <td class="fw-semibold" style="font-size:13px;white-space:nowrap">{{ p.factura?.total | currency:'USD':'symbol':'1.2-2' }}</td>
                 <td><span class="badge" [ngClass]="'badge-' + p.estado">{{ estadoLabel(p.estado) }}</span></td>
@@ -46,6 +57,7 @@ import { Pedido, EstadoPedido } from '../../core/models';
                 <td>
                   <select class="form-select form-select-sm" style="font-size:12px"
                           [value]="p.estado" (change)="cambiarEstado(p.id, $event)"
+                          [disabled]="p.estado === 'listo' || p.estado === 'entregado' || p.estado === 'cancelado'"
                           [attr.aria-label]="'Estado del pedido #' + p.id">
                     @for (e of estados; track e.value) {
                       <option [value]="e.value" [selected]="p.estado === e.value">{{ e.label }}</option>
@@ -80,7 +92,9 @@ export class PedidosAdminComponent implements OnInit {
   ngOnInit(): void { this.load(); }
   load(): void { this.loading.set(true); this.svc.getAll().subscribe({ next: p => { this.pedidos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) }); }
   estadoLabel(e: string): string { return this.estados.find(x => x.value === e)?.label || e; }
-  platosResumen(p: Pedido): string { return p.detalles?.slice(0,2).map(d => d.plato?.nombre).join(', ') || '—'; }
+  obtenerNombresIngredientes(d: any): string {
+    return d.detalleIngredientes?.map((i: any) => i.ingrediente?.nombre).join(', ') || '';
+  }
   cambiarEstado(id: number, e: Event): void {
     const estado = (e.target as HTMLSelectElement).value as EstadoPedido;
     this.svc.updateEstado(id, estado).subscribe({ next: () => this.toast.success('Estado actualizado'), error: () => this.toast.error('Error al actualizar') });

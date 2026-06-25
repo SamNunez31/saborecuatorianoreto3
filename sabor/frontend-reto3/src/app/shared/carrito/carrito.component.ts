@@ -32,18 +32,23 @@ import { ToastService } from '../../core/services/toast.service';
               <p class="mt-3">Tu carrito está vacío</p>
             </div>
           }
-          @for (item of cart.items(); track item.id) {
+          @for (item of cart.items(); track (item.customKey || item.id)) {
             <div class="cart-item-row" role="listitem" [attr.aria-label]="item.nombre">
               <div class="flex-grow-1 me-2">
                 <div class="fw-semibold" style="font-size:14px">{{ item.nombre }}</div>
                 <div class="text-muted" style="font-size:13px">{{ item.precio | currency:'USD':'symbol':'1.2-2' }} c/u</div>
+                @if (item.ingredientesRemovidos?.length) {
+                  <div class="text-muted mt-1" style="font-size:11px">
+                    Sin: {{ item.nombresRemovidos?.join(', ') || 'personalización' }}
+                  </div>
+                }
               </div>
               <div class="d-flex align-items-center gap-2" [attr.aria-label]="'Cantidad de ' + item.nombre">
                 <button class="btn btn-outline-secondary btn-sm rounded-circle px-2 py-0"
-                        (click)="cart.dec(item.id)" [attr.aria-label]="'Disminuir cantidad de ' + item.nombre" style="width:28px;height:28px;line-height:1">−</button>
+                        (click)="cart.dec(item.customKey || item.id.toString())" [attr.aria-label]="'Disminuir cantidad de ' + item.nombre" style="width:28px;height:28px;line-height:1">−</button>
                 <span aria-live="polite" style="min-width:20px;text-align:center">{{ item.cantidad }}</span>
                 <button class="btn btn-outline-secondary btn-sm rounded-circle px-2 py-0"
-                        (click)="cart.inc(item.id)" [attr.aria-label]="'Aumentar cantidad de ' + item.nombre" style="width:28px;height:28px;line-height:1">+</button>
+                        (click)="cart.inc(item.customKey || item.id.toString())" [attr.aria-label]="'Aumentar cantidad de ' + item.nombre" style="width:28px;height:28px;line-height:1">+</button>
               </div>
               <span class="fw-semibold ms-2" style="min-width:60px;text-align:right;font-size:14px">
                 {{ item.precio * item.cantidad | currency:'USD':'symbol':'1.2-2' }}

@@ -37,7 +37,7 @@ import { Tarjeta, Mesa } from '../../core/models';
                     </div>
                     @if (i.ingredientesRemovidos?.length) {
                       <div class="text-muted mt-1" style="font-size:12px">
-                        <i class="bi bi-dash-circle me-1"></i>Sin: ver personalización
+                        <i class="bi bi-dash-circle me-1"></i>Sin: {{ i.nombresRemovidos?.join(', ') || 'ver personalización' }}
                       </div>
                     }
                   </div>
