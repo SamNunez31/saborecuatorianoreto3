@@ -26,6 +26,7 @@ const create = async (req, res, next) => {
 
 const getMisPedidos = async (req, res, next) => {
   try {
+    console.log('clienteId:', req.user.clienteId);
     res.json(await PedidoModel.getByClienteId(req.user.clienteId));
   } catch (e) { next(e); }
 };
