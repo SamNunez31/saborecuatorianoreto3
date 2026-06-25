@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { TarjetasService } from '../../core/services/api.services';
@@ -26,15 +26,24 @@ import { environment } from '../../../environments/environment';
         <!-- TAB TARJETAS -->
         @if (tab() === 'tarjetas') {
           <div role="tabpanel">
+
             <!-- Tarjeta virtual animada -->
-            <div class="tarjeta-virtual mb-4" [ngClass]="marcaActual()" aria-label="Vista previa de tarjeta">
+            <div class="tarjeta-virtual mb-4"
+                 [class.Visa]="marcaActual() === 'VISA'"
+                 [class.Mastercard]="marcaActual() === 'MASTERCARD'"
+                 [style.background]="marcaActual() === 'VISA'
+                   ? 'linear-gradient(135deg,#1a56db 0%,#0a2d9c 100%)'
+                   : 'linear-gradient(135deg,#1a1a2e 0%,#c41230 100%)'"
+                 aria-label="Vista previa de tarjeta">
               <div class="card-shine" aria-hidden="true"></div>
               <div class="card-chip" aria-hidden="true"></div>
               <div class="card-num">{{ previewNum() }}</div>
               <div class="d-flex justify-content-between align-items-end">
                 <div><div class="card-lbl">Titular</div><div class="card-val">{{ previewTitular() || 'TU NOMBRE' }}</div></div>
                 <div><div class="card-lbl">Vence</div><div class="card-val">{{ previewExp() }}</div></div>
-                <div style="font-family:serif;font-style:italic;font-size:18px;font-weight:700">{{ marcaActual() }}</div>
+                <div style="font-family:serif;font-style:italic;font-size:18px;font-weight:700;letter-spacing:.5px">
+                  {{ marcaActual() }}
+                </div>
               </div>
             </div>
 
@@ -60,13 +69,16 @@ import { environment } from '../../../environments/environment';
               @if (!tarjetas().length) { <p class="text-muted" style="font-size:14px">Sin tarjetas guardadas.</p> }
             </div>
 
-            <!-- Formulario nueva tarjeta (Reactive Forms) -->
+            <!-- Formulario nueva tarjeta -->
             <section class="card border-0 shadow-sm rounded-4 p-4" aria-labelledby="nueva-tarjeta-title">
               <h2 id="nueva-tarjeta-title" class="fw-semibold mb-4" style="font-size:1rem">Agregar nueva tarjeta</h2>
               <form [formGroup]="cardForm" (ngSubmit)="saveTarjeta()" novalidate>
-                <!-- Marca -->
+
+                <!-- Marca (detección automática) -->
                 <div class="mb-3">
-                  <label class="form-label fw-semibold" style="font-size:13px">Marca</label>
+                  <label class="form-label fw-semibold" style="font-size:13px">
+                    Marca <span class="text-muted fw-normal">(se detecta al ingresar el número)</span>
+                  </label>
                   <div class="d-flex gap-2" role="group" aria-label="Marca de tarjeta">
                     @for (m of marcas; track m) {
                       <button type="button" class="marca-btn" [class.active]="marcaActual() === m"
@@ -74,18 +86,24 @@ import { environment } from '../../../environments/environment';
                     }
                   </div>
                 </div>
-                <!-- Número -->
+
+                <!-- Número con validación Luhn -->
                 <div class="mb-3">
                   <label for="cardNum" class="form-label fw-semibold" style="font-size:13px">Número de tarjeta *</label>
                   <input id="cardNum" type="text" class="form-control" formControlName="numero"
-                         maxlength="19" placeholder="1234 5678 9012 3456" autocomplete="cc-number"
-                         (input)="formatCardNum($event)"
+                         inputmode="numeric" maxlength="19" placeholder="1234 5678 9012 3456"
+                         autocomplete="cc-number" (input)="formatCardNum($event)"
                          [class.is-invalid]="f['numero'].invalid && f['numero'].touched">
                   <div class="form-text text-muted" style="font-size:12px">Solo guardamos los últimos 4 dígitos.</div>
                   @if (f['numero'].invalid && f['numero'].touched) {
-                    <div class="invalid-feedback" role="alert">Número de tarjeta inválido (13–16 dígitos).</div>
+                    @if (f['numero'].errors?.['luhn']) {
+                      <div class="invalid-feedback d-block" role="alert">Número de tarjeta inválido (verificación Luhn fallida).</div>
+                    } @else {
+                      <div class="invalid-feedback" role="alert">Ingresa entre 13 y 16 dígitos.</div>
+                    }
                   }
                 </div>
+
                 <!-- Titular -->
                 <div class="mb-3">
                   <label for="cardTit" class="form-label fw-semibold" style="font-size:13px">Titular *</label>
@@ -97,6 +115,7 @@ import { environment } from '../../../environments/environment';
                     <div class="invalid-feedback" role="alert">Titular requerido.</div>
                   }
                 </div>
+
                 <!-- Exp + CVV -->
                 <div class="row g-3 mb-3">
                   <div class="col-4">
@@ -123,6 +142,7 @@ import { environment } from '../../../environments/environment';
                     <div class="form-text text-muted" style="font-size:11px">Nunca lo almacenamos.</div>
                   </div>
                 </div>
+
                 <button type="submit" class="btn btn-dorado w-100 fw-semibold" [disabled]="savingCard()">
                   @if (savingCard()) { <span class="spinner-border spinner-border-sm me-2"></span> Guardando... }
                   @else { Guardar tarjeta }
@@ -135,7 +155,6 @@ import { environment } from '../../../environments/environment';
         <!-- TAB PERFIL -->
         @if (tab() === 'perfil') {
           <div role="tabpanel">
-            <!-- Mis datos -->
             <section class="card border-0 shadow-sm rounded-4 p-4 mb-4" aria-labelledby="mis-datos-title">
               <h2 id="mis-datos-title" class="fw-semibold mb-4" style="font-size:1rem">Mis datos</h2>
               <form [formGroup]="perfilForm" (ngSubmit)="savePerfil()" novalidate>
@@ -183,7 +202,6 @@ import { environment } from '../../../environments/environment';
               </form>
             </section>
 
-            <!-- Info cuenta y cerrar sesión -->
             <div class="card border-0 shadow-sm rounded-4 p-4">
               <div class="row g-3 mb-4">
                 <div class="col-12"><div class="text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.1em">Email</div><div class="fw-semibold mt-1">{{ auth.currentUser()?.email }}</div></div>
@@ -202,19 +220,33 @@ export class MiCuentaComponent implements OnInit {
   private http     = inject(HttpClient);
   private tarjSvc  = inject(TarjetasService);
   private toast    = inject(ToastService);
-  auth      = inject(AuthService);
-  tarjetas  = signal<Tarjeta[]>([]);
-  tab       = signal<'tarjetas'|'perfil'>('tarjetas');
-  marcaActual = signal('Visa');
-  savingCard  = signal(false);
+  auth         = inject(AuthService);
+  tarjetas     = signal<Tarjeta[]>([]);
+  tab          = signal<'tarjetas'|'perfil'>('tarjetas');
+  marcaActual  = signal<'VISA'|'MASTERCARD'>('VISA');
+  savingCard   = signal(false);
   savingPerfil = signal(false);
 
-  marcas = ['Visa','Mastercard','Amex','Otro'];
-  meses  = Array.from({length:12}, (_,i) => String(i+1).padStart(2,'0'));
-  anios  = Array.from({length:8},  (_,i) => String(new Date().getFullYear()+i));
+  readonly marcas = ['VISA', 'MASTERCARD'];
+  readonly meses  = Array.from({length:12}, (_,i) => String(i+1).padStart(2,'0'));
+  readonly anios  = Array.from({length:8},  (_,i) => String(new Date().getFullYear()+i));
+
+  // Luhn algorithm — declared before cardForm so it can be used as validator
+  private readonly luhnCheck = (ctrl: AbstractControl): ValidationErrors | null => {
+    const digits = (ctrl.value || '').replace(/\D/g, '');
+    if (!digits || digits.length < 13) return null; // length handled by pattern validator
+    let sum = 0, alt = false;
+    for (let i = digits.length - 1; i >= 0; i--) {
+      let n = +digits[i];
+      if (alt) { n *= 2; if (n > 9) n -= 9; }
+      sum += n;
+      alt = !alt;
+    }
+    return sum % 10 === 0 ? null : { luhn: true };
+  };
 
   cardForm = this.fb.group({
-    numero:  ['', [Validators.required, Validators.pattern(/^[\d\s]{13,19}$/)]],
+    numero:  ['', [Validators.required, Validators.pattern(/^[\d\s]{13,19}$/), this.luhnCheck]],
     titular: ['', Validators.required],
     mesExp:  ['', Validators.required],
     anioExp: ['', Validators.required],
@@ -230,15 +262,20 @@ export class MiCuentaComponent implements OnInit {
 
   get f()  { return this.cardForm.controls; }
   get pf() { return this.perfilForm.controls; }
-  previewNum()     { const v = this.f['numero'].value?.replace(/\s/g,'') || ''; const p = v.match(/.{1,4}/g) || []; return p.map((c,i)=>i<p.length-1?'****':c.padEnd(4,'*')).join(' ') || '**** **** **** ****'; }
-  previewTitular() { return this.f['titular'].value || ''; }
-  previewExp()     { return `${this.f['mesExp'].value||'MM'}/${(this.f['anioExp'].value||'').slice(-2)||'AA'}`; }
+
+  previewNum(): string {
+    const v = this.f['numero'].value?.replace(/\s/g, '') || '';
+    const chunks = v.match(/.{1,4}/g) || [];
+    return chunks.map((c, i) => i < chunks.length - 1 ? '****' : c.padEnd(4, '*')).join(' ') || '**** **** **** ****';
+  }
+  previewTitular(): string { return this.f['titular'].value || ''; }
+  previewExp(): string     { return `${this.f['mesExp'].value || 'MM'}/${(this.f['anioExp'].value || '').slice(-2) || 'AA'}`; }
 
   ngOnInit(): void { this.loadTarjetas(); this.loadPerfil(); }
 
   loadPerfil(): void {
     this.http.get<any>(`${environment.apiUrl}/clientes/mi-perfil`).subscribe({
-      next: (p) => this.perfilForm.patchValue({ nombre: p.nombre || '', apellido: p.apellido || '', telefono: p.telefono || '', direccion: p.direccion || '' }),
+      next: p => this.perfilForm.patchValue({ nombre: p.nombre || '', apellido: p.apellido || '', telefono: p.telefono || '', direccion: p.direccion || '' }),
       error: () => {}
     });
   }
@@ -248,18 +285,28 @@ export class MiCuentaComponent implements OnInit {
     this.savingPerfil.set(true);
     this.http.put(`${environment.apiUrl}/clientes/mi-perfil`, this.perfilForm.value).subscribe({
       next: () => { this.toast.success('Datos actualizados correctamente'); this.savingPerfil.set(false); },
-      error: (e) => { this.toast.error(e.error?.error || 'Error al guardar'); this.savingPerfil.set(false); }
+      error: e => { this.toast.error(e.error?.error || 'Error al guardar'); this.savingPerfil.set(false); }
     });
   }
+
   loadTarjetas(): void { this.tarjSvc.getAll().subscribe(t => this.tarjetas.set(t)); }
 
-  setMarca(m: string): void { this.marcaActual.set(m); }
+  setMarca(m: string): void { this.marcaActual.set(m as 'VISA'|'MASTERCARD'); }
+
   formatCardNum(e: Event): void {
     const input = e.target as HTMLInputElement;
-    let v = input.value.replace(/\D/g,'').substring(0,16);
-    input.value = v.replace(/(.{4})/g,'$1 ').trim();
+    const digits = input.value.replace(/\D/g, '').substring(0, 16);
+    input.value = digits.replace(/(.{4})/g, '$1 ').trim();
     this.cardForm.patchValue({ numero: input.value });
+
+    // Auto-detect brand from BIN prefix
+    if (digits.startsWith('4')) {
+      this.marcaActual.set('VISA');
+    } else if (/^5[1-5]/.test(digits) || /^2[2-7]/.test(digits)) {
+      this.marcaActual.set('MASTERCARD');
+    }
   }
+
   toUpper(e: Event): void {
     const input = e.target as HTMLInputElement;
     input.value = input.value.toUpperCase();
@@ -271,15 +318,29 @@ export class MiCuentaComponent implements OnInit {
     this.savingCard.set(true);
     const v = this.cardForm.value;
     this.tarjSvc.create({ numero: v.numero!, titular: v.titular!, marca: this.marcaActual(), mesExp: v.mesExp!, anioExp: v.anioExp! }).subscribe({
-      next: () => { this.toast.success('Tarjeta guardada'); this.cardForm.reset(); this.loadTarjetas(); this.savingCard.set(false); },
-      error: (e) => { this.toast.error(e.error?.error || 'Error al guardar'); this.savingCard.set(false); }
+      next: () => {
+        this.toast.success('Tarjeta guardada');
+        this.cardForm.reset();
+        this.marcaActual.set('VISA');
+        this.loadTarjetas();
+        this.savingCard.set(false);
+      },
+      error: e => { this.toast.error(e.error?.error || 'Error al guardar'); this.savingCard.set(false); }
     });
   }
+
   deleteTarjeta(id: number): void {
     if (!confirm('¿Eliminar esta tarjeta?')) return;
-    this.tarjSvc.delete(id).subscribe({ next: () => { this.toast.success('Tarjeta eliminada'); this.loadTarjetas(); }, error: () => this.toast.error('Error al eliminar') });
+    this.tarjSvc.delete(id).subscribe({
+      next: () => { this.toast.success('Tarjeta eliminada'); this.loadTarjetas(); },
+      error: () => this.toast.error('Error al eliminar')
+    });
   }
+
   setPrincipal(id: number): void {
-    this.tarjSvc.setPrincipal(id).subscribe({ next: () => { this.toast.success('Tarjeta principal actualizada'); this.loadTarjetas(); }, error: () => this.toast.error('Error') });
+    this.tarjSvc.setPrincipal(id).subscribe({
+      next: () => { this.toast.success('Tarjeta principal actualizada'); this.loadTarjetas(); },
+      error: () => this.toast.error('Error')
+    });
   }
 }
