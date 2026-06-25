@@ -14,6 +14,11 @@ import { Tarjeta } from '../../core/models';
   template: `
     <main style="padding-top:80px;min-height:100vh;background:var(--se-crema)" id="main-content">
       <div class="container py-5">
+        <div class="mb-3">
+          <button class="btn btn-outline-secondary btn-sm" (click)="router.navigate(['/menu'])">
+            ← Volver al menú
+          </button>
+        </div>
         <h1 style="font-family:var(--se-serif);font-size:1.8rem;margin-bottom:28px">Confirma tu pedido</h1>
         <div class="row g-4">
           <!-- Izquierda -->

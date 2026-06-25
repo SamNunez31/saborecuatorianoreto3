@@ -53,7 +53,7 @@ const SUPABASE_PUBLIC = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/obj
                   <button class="btn btn-sm btn-outline-primary rounded-pill me-2 px-3" (click)="editar(p)" aria-label="Editar plato">
                     <i class="bi bi-pencil me-1"></i>Editar
                   </button>
-                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3" (click)="eliminar(p.id)" aria-label="Eliminar plato">
+                  <button class="btn btn-sm btn-outline-danger rounded-pill px-3" (click)="abrirEliminarModal(p)" aria-label="Eliminar plato">
                     <i class="bi bi-trash me-1"></i>Eliminar
                   </button>
                 </td>
@@ -69,7 +69,7 @@ const SUPABASE_PUBLIC = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/obj
       </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL EDITAR / AGREGAR -->
     @if (modalOpen()) {
       <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true" [attr.aria-labelledby]="'modalPlatoTitle'"
            style="background:rgba(0,0,0,.5)" (click)="cerrarModal()">
@@ -137,11 +137,41 @@ const SUPABASE_PUBLIC = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/obj
                   }
                   <div class="form-text" style="font-size:11px">JPG, PNG o WebP. Máximo 1 MB.</div>
                 </div>
-                <button type="submit" class="btn btn-dorado w-100 fw-semibold" [disabled]="saving() || uploading()">
-                  @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> Guardando... }
-                  @else { {{ editando() ? 'Actualizar' : 'Agregar plato' }} }
-                </button>
+                <div class="d-flex gap-2 mt-2">
+                  <button type="button" class="btn btn-outline-secondary flex-fill" (click)="cerrarModal()">← Volver</button>
+                  <button type="submit" class="btn btn-dorado flex-fill fw-semibold" [disabled]="saving() || uploading()">
+                    @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                    {{ saving() ? 'Guardando...' : (editando() ? 'Actualizar' : 'Agregar plato') }}
+                  </button>
+                </div>
               </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MODAL CONFIRMAR ELIMINACIÓN -->
+    @if (platoAEliminar()) {
+      <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalElimTitle"
+           style="background:rgba(0,0,0,.5)" (click)="cancelarEliminar()">
+        <div class="modal-dialog modal-dialog-centered modal-sm" (click)="$event.stopPropagation()">
+          <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+              <h5 id="modalElimTitle" class="modal-title fw-bold" style="font-family:var(--se-serif)">¿Eliminar plato?</h5>
+              <button type="button" class="btn-close" (click)="cancelarEliminar()" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body px-4">
+              <p class="text-muted mb-0" style="font-size:14px">
+                ¿Estás seguro que deseas eliminar <strong>"{{ platoAEliminar()?.nombre }}"</strong> del menú?
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div class="modal-footer border-0 pt-2 gap-2">
+              <button type="button" class="btn btn-outline-secondary" (click)="cancelarEliminar()">Cancelar</button>
+              <button type="button" class="btn btn-danger" (click)="confirmarEliminar()">
+                <i class="bi bi-trash me-1"></i>Sí, eliminar
+              </button>
             </div>
           </div>
         </div>
@@ -154,15 +184,16 @@ export class PlatosAdminComponent implements OnInit {
   private svc   = inject(PlatosService);
   private toast = inject(ToastService);
 
-  platos     = signal<Plato[]>([]);
-  categorias = signal<CategoriaPlato[]>([]);
-  loading    = signal(true);
-  modalOpen  = signal(false);
-  editando   = signal<Plato | null>(null);
-  saving     = signal(false);
-  uploading  = signal(false);
-  uploadError = signal('');
-  busqueda   = signal('');
+  platos          = signal<Plato[]>([]);
+  categorias      = signal<CategoriaPlato[]>([]);
+  loading         = signal(true);
+  modalOpen       = signal(false);
+  editando        = signal<Plato | null>(null);
+  saving          = signal(false);
+  uploading       = signal(false);
+  uploadError     = signal('');
+  busqueda        = signal('');
+  platoAEliminar  = signal<Plato | null>(null);
 
   platosFiltrados = computed(() => {
     const q = this.busqueda().toLowerCase().trim();
@@ -182,18 +213,21 @@ export class PlatosAdminComponent implements OnInit {
     this.svc.getCategorias().subscribe(c => this.categorias.set(c));
     this.load();
   }
+
   load(): void {
     this.loading.set(true);
     this.svc.getAll().subscribe({ next: p => { this.platos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) });
   }
 
   abrirModal(): void { this.editando.set(null); this.uploadError.set(''); this.platoForm.reset(); this.modalOpen.set(true); }
+
   editar(p: Plato): void {
     this.editando.set(p);
     this.uploadError.set('');
     this.platoForm.patchValue({ categoriaId: p.categoriaId, nombre: p.nombre, descripcion: p.descripcion || '', precio: p.precio, imagenUrl: p.imagenUrl || '' });
     this.modalOpen.set(true);
   }
+
   cerrarModal(): void { this.modalOpen.set(false); this.editando.set(null); this.uploadError.set(''); }
 
   async onFileChange(e: Event): Promise<void> {
@@ -232,12 +266,19 @@ export class PlatosAdminComponent implements OnInit {
     });
   }
 
-  eliminar(id: number): void {
-    const p = this.platos().find(x => x.id === id);
-    if (!confirm(`¿Eliminar "${p?.nombre}"? El plato dejará de aparecer en el menú.`)) return;
-    this.svc.update(id, { disponible: false }).subscribe({
-      next: () => { this.toast.success(`"${p?.nombre}" eliminado del menú`); this.platos.update(list => list.filter(x => x.id !== id)); },
-      error: () => this.toast.error('Error al eliminar el plato')
+  abrirEliminarModal(p: Plato): void { this.platoAEliminar.set(p); }
+  cancelarEliminar(): void { this.platoAEliminar.set(null); }
+
+  confirmarEliminar(): void {
+    const p = this.platoAEliminar();
+    if (!p) return;
+    this.svc.update(p.id, { disponible: false }).subscribe({
+      next: () => {
+        this.toast.success(`"${p.nombre}" eliminado del menú`);
+        this.platos.update(list => list.filter(x => x.id !== p.id));
+        this.cancelarEliminar();
+      },
+      error: () => { this.toast.error('Error al eliminar el plato'); this.cancelarEliminar(); }
     });
   }
 }

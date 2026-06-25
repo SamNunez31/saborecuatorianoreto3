@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { PedidosService, FacturasService } from '../../core/services/api.services';
 import { ToastService } from '../../core/services/toast.service';
 import { Pedido, Factura } from '../../core/models';
@@ -8,13 +9,13 @@ import { MapComponent } from '../../shared/map/map.component';
 @Component({
   selector: 'app-mis-pedidos',
   standalone: true,
-  imports: [CommonModule, MapComponent],
+  imports: [CommonModule, RouterLink, MapComponent],
   template: `
     <main style="padding-top:80px;min-height:100vh;background:var(--se-crema)">
       <div class="container py-5" style="max-width:800px">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div><span class="eyebrow d-block mb-1">Tu historial</span><h1 style="font-family:var(--se-serif);font-size:1.8rem">Mis pedidos</h1></div>
-          <a href="/menu" class="btn btn-dorado btn-sm">+ Nuevo pedido</a>
+          <a routerLink="/menu" class="btn btn-dorado btn-sm">+ Nuevo pedido</a>
         </div>
 
         @if (loading()) { <div class="text-center py-5"><div class="spinner-border" style="color:var(--se-dorado)"></div></div> }
@@ -24,7 +25,7 @@ import { MapComponent } from '../../shared/map/map.component';
             <div style="font-size:60px">📦</div>
             <h3 class="mt-3" style="font-family:var(--se-serif)">Aún no tienes pedidos</h3>
             <p class="text-muted">Explora el menú y haz tu primer pedido.</p>
-            <a href="/menu" class="btn btn-dorado mt-3">Ver menú</a>
+            <a routerLink="/menu" class="btn btn-dorado mt-3">Ver menú</a>
           </div>
         }
 
@@ -47,7 +48,7 @@ import { MapComponent } from '../../shared/map/map.component';
                             [attr.aria-label]="'Ver factura ' + p.factura.numeroFactura">Ver factura</button>
                   }
                   @if (p.estado === 'pendiente') {
-                    <button class="btn btn-outline-danger btn-sm" (click)="cancelarPedido(p.id)"
+                    <button class="btn btn-outline-danger btn-sm" (click)="abrirCancelarModal(p)"
                             [attr.aria-label]="'Cancelar pedido #' + p.id">Cancelar pedido</button>
                   }
                 </div>
@@ -123,7 +124,7 @@ import { MapComponent } from '../../shared/map/map.component';
       </div>
     </main>
 
-    <!-- Modal factura -->
+    <!-- MODAL FACTURA -->
     @if (facturaModal()) {
       <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalTitle"
            style="background:rgba(0,0,0,.5)" (click)="facturaModal.set(null)">
@@ -181,15 +182,43 @@ import { MapComponent } from '../../shared/map/map.component';
         </div>
       </div>
     }
+
+    <!-- MODAL CONFIRMAR CANCELACIÓN -->
+    @if (pedidoACancelar()) {
+      <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modalCancelTitle"
+           style="background:rgba(0,0,0,.5)" (click)="cancelarCancelacion()">
+        <div class="modal-dialog modal-dialog-centered modal-sm" (click)="$event.stopPropagation()">
+          <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+              <h5 id="modalCancelTitle" class="modal-title fw-bold" style="font-family:var(--se-serif)">¿Cancelar pedido?</h5>
+              <button type="button" class="btn-close" (click)="cancelarCancelacion()" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body px-4">
+              <p class="text-muted mb-0" style="font-size:14px">
+                ¿Seguro que deseas cancelar el pedido
+                <strong>{{ pedidoACancelar()?.factura?.numeroFactura || '#' + pedidoACancelar()?.id }}</strong>?
+                Esta acción no se puede revertir.
+              </p>
+            </div>
+            <div class="modal-footer border-0 pt-2 gap-2">
+              <button type="button" class="btn btn-outline-secondary" (click)="cancelarCancelacion()">No, mantener</button>
+              <button type="button" class="btn btn-danger" (click)="confirmarCancelacion()">Sí, cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `
 })
 export class MisPedidosComponent implements OnInit {
   private svc      = inject(PedidosService);
   private factSvc  = inject(FacturasService);
   private toast    = inject(ToastService);
-  pedidos      = signal<Pedido[]>([]);
-  loading      = signal(true);
-  facturaModal = signal<Factura | null>(null);
+
+  pedidos          = signal<Pedido[]>([]);
+  loading          = signal(true);
+  facturaModal     = signal<Factura | null>(null);
+  pedidoACancelar  = signal<Pedido | null>(null);
 
   readonly pasos = [
     { key: 'pendiente',      label: 'Pendiente' },
@@ -209,14 +238,19 @@ export class MisPedidosComponent implements OnInit {
     this.factSvc.getById(id).subscribe({ next: f => this.facturaModal.set(f), error: () => this.toast.error('No se pudo cargar la factura') });
   }
 
-  cancelarPedido(id: number): void {
-    if (!confirm('¿Cancelar este pedido? Esta acción no se puede deshacer.')) return;
-    this.svc.updateEstado(id, 'cancelado').subscribe({
+  abrirCancelarModal(p: Pedido): void { this.pedidoACancelar.set(p); }
+  cancelarCancelacion(): void { this.pedidoACancelar.set(null); }
+
+  confirmarCancelacion(): void {
+    const p = this.pedidoACancelar();
+    if (!p) return;
+    this.svc.updateEstado(p.id, 'cancelado').subscribe({
       next: (updated) => {
         this.toast.success('Pedido cancelado');
-        this.pedidos.update(list => list.map(p => p.id === id ? { ...p, estado: updated.estado } : p));
+        this.pedidos.update(list => list.map(x => x.id === p.id ? { ...x, estado: updated.estado } : x));
+        this.cancelarCancelacion();
       },
-      error: (e) => this.toast.error(e.error?.error || 'No se pudo cancelar el pedido')
+      error: (e) => { this.toast.error(e.error?.error || 'No se pudo cancelar el pedido'); this.cancelarCancelacion(); }
     });
   }
 
