@@ -5,7 +5,10 @@ const PlatoModel = {
   getAll(categoriaId = null) {
     return prisma.plato.findMany({
       where: { disponible: true, ...(categoriaId ? { categoriaId: parseInt(categoriaId) } : {}) },
-      include: { categoria: true },
+      include: {
+        categoria: true,
+        platoIngredientes: { include: { ingrediente: true }, orderBy: { id: 'asc' } }
+      },
       orderBy: { nombre: 'asc' }
     });
   },
