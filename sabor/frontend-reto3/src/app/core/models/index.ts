@@ -32,7 +32,7 @@ export interface CreateTarjetaDto { titular: string; numero: string; marca: stri
 export interface Cliente { id: number; nombre: string; apellido: string; telefono?: string; cedula?: string; direccion?: string; createdAt: string; usuario?: Usuario; _count?: { pedidos: number }; }
 
 // ── DASHBOARD ────────────────────────────────────────────
-export interface DashboardStats { ventasHoy: number; pedidosHoy: number; pedidosPendientes: number; totalClientes: number; totalPlatos: number; }
+export interface DashboardStats { ventasHoy: number; pedidosHoy: number; pedidosPendientes: number; totalClientes: number; totalPlatos: number; platoPrincipal: { nombre: string; cantidad: number } | null; horaPico: string | null; }
 export interface VentasDia      { facturas: Factura[]; resumen: { totalDia: number; totalIva: number; cantPedidos: number }; }
 
 // ── CARRITO ──────────────────────────────────────────────

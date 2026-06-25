@@ -7,22 +7,49 @@ const getDashboard = async (req, res, next) => {
     const hoy    = new Date(); hoy.setHours(0, 0, 0, 0);
     const manana = new Date(hoy); manana.setDate(manana.getDate() + 1);
 
-    const [ventasHoy, pedidosPendientes, totalClientes, totalPlatos] = await Promise.all([
+    const [ventasHoyData, pedidosPendientes, totalClientes, totalPlatos, topPlatoData, pedidosDelDia] = await Promise.all([
       prisma.factura.aggregate({
         where: { fechaEmision: { gte: hoy, lt: manana }, estado: { not: 'anulada' } },
         _sum: { total: true }, _count: true
       }),
       prisma.pedido.count({ where: { estado: { in: ['pendiente', 'en_preparacion'] } } }),
       prisma.cliente.count(),
-      prisma.plato.count({ where: { disponible: true } })
+      prisma.plato.count({ where: { disponible: true } }),
+      prisma.detallePedido.groupBy({
+        by: ['platoId'],
+        where: { pedido: { fechaPedido: { gte: hoy, lt: manana } } },
+        _sum: { cantidad: true },
+        orderBy: { _sum: { cantidad: 'desc' } },
+        take: 1
+      }),
+      prisma.pedido.findMany({
+        where: { fechaPedido: { gte: hoy, lt: manana } },
+        select: { fechaPedido: true }
+      })
     ]);
 
+    let platoPrincipal = null;
+    if (topPlatoData.length > 0) {
+      const p = await prisma.plato.findUnique({ where: { id: topPlatoData[0].platoId }, select: { nombre: true } });
+      platoPrincipal = { nombre: p?.nombre || '—', cantidad: Number(topPlatoData[0]._sum.cantidad || 0) };
+    }
+
+    let horaPico = null;
+    if (pedidosDelDia.length > 0) {
+      const conteo = {};
+      pedidosDelDia.forEach(p => { const h = new Date(p.fechaPedido).getHours(); conteo[h] = (conteo[h] || 0) + 1; });
+      const [hora] = Object.entries(conteo).sort((a, b) => b[1] - a[1])[0];
+      horaPico = `${hora}:00 – ${+hora + 1}:00`;
+    }
+
     res.json({
-      ventasHoy:        Number(ventasHoy._sum.total || 0),
-      pedidosHoy:       ventasHoy._count,
+      ventasHoy:        Number(ventasHoyData._sum.total || 0),
+      pedidosHoy:       ventasHoyData._count,
       pedidosPendientes,
       totalClientes,
-      totalPlatos
+      totalPlatos,
+      platoPrincipal,
+      horaPico
     });
   } catch (e) { next(e); }
 };

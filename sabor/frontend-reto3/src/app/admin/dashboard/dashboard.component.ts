@@ -1,7 +1,7 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AdminService, Recomendacion } from '../../core/services/api.services';
+import { AdminService } from '../../core/services/api.services';
 import { DashboardStats } from '../../core/models';
 
 @Component({
@@ -21,7 +21,7 @@ import { DashboardStats } from '../../core/models';
       @if (loading()) { <div class="text-center py-5"><div class="spinner-border" style="color:var(--se-dorado)"></div></div> }
 
       @if (!loading() && stats()) {
-        <!-- Stats -->
+        <!-- Stats principales -->
         <div class="row g-3 mb-4" role="list">
           <div class="col-6 col-xl-3" role="listitem">
             <div class="stat-card"><div class="stat-label">Ventas hoy</div><div class="stat-value gold">{{ stats()!.ventasHoy | currency:'USD':'symbol':'1.2-2' }}</div></div>
@@ -37,42 +37,63 @@ import { DashboardStats } from '../../core/models';
           </div>
         </div>
 
-        <!-- Recomendaciones IA -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="fw-semibold m-0" style="font-size:1rem">💡 Recomendaciones IA</h2>
-          @if (!loadingIA() && recomendaciones().length === 0) {
-            <button class="btn btn-outline-secondary btn-sm" (click)="loadIA()">Obtener recomendaciones</button>
-          } @else if (!loadingIA()) {
-            <button class="btn btn-outline-secondary btn-sm" (click)="loadIA()">↻ Regenerar</button>
-          }
-        </div>
+        <!-- Análisis del negocio -->
+        <h2 class="fw-semibold mb-3" style="font-size:1rem">📊 Análisis del negocio</h2>
+        <div class="row g-3 mb-4">
 
-        @if (loadingIA()) {
-          <div class="d-flex align-items-center gap-2 mb-4 text-muted" style="font-size:14px">
-            <div class="spinner-border spinner-border-sm" style="color:var(--se-dorado)"></div>
-            Consultando inteligencia artificial…
-          </div>
-        }
-
-        @if (!loadingIA() && recomendaciones().length > 0) {
-          <div class="row g-3 mb-4">
-            @for (r of recomendaciones(); track $index) {
-              <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 h-100 p-4" style="border-left:4px solid var(--se-dorado) !important">
-                  <div style="font-size:24px;margin-bottom:10px">💡</div>
-                  <div class="fw-semibold mb-2" style="font-size:15px">{{ r.titulo }}</div>
-                  <div class="text-muted" style="font-size:13px;line-height:1.5">{{ r.descripcion }}</div>
-                </div>
+          <!-- Plato más vendido del día -->
+          <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4" style="border-left:4px solid var(--se-dorado)">
+              <div style="font-size:26px;margin-bottom:8px">🍽️</div>
+              <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">Plato del día</div>
+              <div class="fw-bold" style="font-size:14px;line-height:1.3">
+                {{ stats()!.platoPrincipal?.nombre ?? 'Sin pedidos aún' }}
               </div>
-            }
+              @if (stats()!.platoPrincipal) {
+                <div class="mt-1" style="font-size:12px;color:var(--se-gris)">
+                  {{ stats()!.platoPrincipal!.cantidad }} unidades
+                </div>
+              }
+            </div>
           </div>
-        }
 
-        @if (!loadingIA() && errorIA()) {
-          <div class="alert alert-warning rounded-3 mb-4" style="font-size:13px">
-            <i class="bi bi-exclamation-triangle me-2"></i>{{ errorIA() }}
+          <!-- Hora pico -->
+          <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4" style="border-left:4px solid #6366f1">
+              <div style="font-size:26px;margin-bottom:8px">⏰</div>
+              <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">Hora pico</div>
+              <div class="fw-bold" style="font-size:14px">
+                {{ stats()!.horaPico ?? 'Sin datos' }}
+              </div>
+              @if (stats()!.horaPico) {
+                <div class="mt-1" style="font-size:12px;color:var(--se-gris)">Mayor demanda</div>
+              }
+            </div>
           </div>
-        }
+
+          <!-- Ticket promedio -->
+          <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4" style="border-left:4px solid #16a34a">
+              <div style="font-size:26px;margin-bottom:8px">💰</div>
+              <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">Ticket promedio</div>
+              <div class="fw-bold" style="font-size:14px">
+                {{ ticketPromedio() | currency:'USD':'symbol':'1.2-2' }}
+              </div>
+              <div class="mt-1" style="font-size:12px;color:var(--se-gris)">Por pedido</div>
+            </div>
+          </div>
+
+          <!-- Recomendación automática -->
+          <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4"
+                 [style.border-left]="'4px solid ' + recomendacionColor()">
+              <div style="font-size:26px;margin-bottom:8px">{{ recomendacionIcono() }}</div>
+              <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">Estado</div>
+              <div class="fw-semibold" style="font-size:13px;line-height:1.4">{{ recomendacion() }}</div>
+            </div>
+          </div>
+
+        </div>
 
         <!-- Accesos rápidos -->
         <h2 class="fw-semibold mb-3" style="font-size:1rem">Accesos rápidos</h2>
@@ -94,46 +115,59 @@ import { DashboardStats } from '../../core/models';
 })
 export class DashboardComponent implements OnInit {
   private svc = inject(AdminService);
-  stats          = signal<DashboardStats | null>(null);
-  loading        = signal(true);
-  recomendaciones = signal<Recomendacion[]>([]);
-  loadingIA      = signal(false);
-  errorIA        = signal('');
+
+  stats   = signal<DashboardStats | null>(null);
+  loading = signal(true);
   hoy = new Date().toLocaleDateString('es-EC', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
   accesos = [
-    { ruta:'/admin/pedidos',  icon:'📦', titulo:'Pedidos',      desc:'Gestionar estados de pedidos' },
-    { ruta:'/admin/ventas',   icon:'💰', titulo:'Ventas del día',desc:'Facturas facturadas hoy' },
-    { ruta:'/admin/platos',   icon:'🍽', titulo:'Menú',          desc:'Agregar, editar o deshabilitar platos' },
-    { ruta:'/admin/facturas', icon:'🧾', titulo:'Facturas',      desc:'Historial completo de facturas' },
-    { ruta:'/admin/clientes', icon:'👥', titulo:'Clientes',      desc:'Clientes registrados' },
+    { ruta:'/admin/pedidos',  icon:'📦', titulo:'Pedidos',       desc:'Gestionar estados de pedidos' },
+    { ruta:'/admin/ventas',   icon:'💰', titulo:'Ventas del día', desc:'Facturas emitidas hoy' },
+    { ruta:'/admin/platos',   icon:'🍽', titulo:'Menú',           desc:'Agregar, editar o deshabilitar platos' },
+    { ruta:'/admin/facturas', icon:'🧾', titulo:'Facturas',       desc:'Historial completo de facturas' },
+    { ruta:'/admin/clientes', icon:'👥', titulo:'Clientes',       desc:'Clientes registrados' },
   ];
+
+  ticketPromedio = computed(() => {
+    const s = this.stats();
+    if (!s || s.pedidosHoy === 0) return 0;
+    return s.ventasHoy / s.pedidosHoy;
+  });
+
+  recomendacion = computed(() => {
+    const s = this.stats();
+    if (!s) return '';
+    if (s.pedidosPendientes > 3) return `Hay ${s.pedidosPendientes} pedidos por atender. ¡A cocinar!`;
+    if (s.ventasHoy > 50)        return '¡Buen día de ventas! Sigue así.';
+    if (s.totalClientes > 10)    return `Base de clientes creciendo: ${s.totalClientes} registrados.`;
+    return 'Comienza a tomar pedidos para ver tu progreso.';
+  });
+
+  recomendacionIcono = computed(() => {
+    const s = this.stats();
+    if (!s) return '💡';
+    if (s.pedidosPendientes > 3) return '⚠️';
+    if (s.ventasHoy > 50)        return '🎉';
+    if (s.totalClientes > 10)    return '📈';
+    return '💡';
+  });
+
+  recomendacionColor = computed(() => {
+    const s = this.stats();
+    if (!s) return '#c9961a';
+    if (s.pedidosPendientes > 3) return '#ef4444';
+    if (s.ventasHoy > 50)        return '#16a34a';
+    if (s.totalClientes > 10)    return '#6366f1';
+    return '#c9961a';
+  });
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading.set(true);
     this.svc.getDashboard().subscribe({
-      next: d => { this.stats.set(d); this.loading.set(false); this.loadIA(); },
+      next: d => { this.stats.set(d); this.loading.set(false); },
       error: () => this.loading.set(false)
-    });
-  }
-
-  loadIA(): void {
-    this.loadingIA.set(true);
-    this.errorIA.set('');
-    this.svc.getRecomendaciones().subscribe({
-      next: r => {
-        console.log('[Groq] respuesta completa:', r);
-        console.log('[Groq] recomendaciones:', r.recomendaciones);
-        this.recomendaciones.set(r.recomendaciones ?? []);
-        this.loadingIA.set(false);
-      },
-      error: (e) => {
-        console.error('[Groq] error HTTP:', e);
-        this.errorIA.set('No se pudieron obtener recomendaciones. Verifica la clave de Groq.');
-        this.loadingIA.set(false);
-      }
     });
   }
 }
