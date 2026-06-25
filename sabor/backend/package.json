@@ -2,12 +2,15 @@
   "name": "sabor-ecuatoriano-backend",
   "version": "1.0.0",
   "scripts": {
-    "dev":   "nodemon src/index.js",
-    "start": "node src/index.js",
-    "seed":  "node prisma/seed.js"
+    "dev":         "nodemon src/index.js",
+    "start":       "node src/index.js",
+    "build":       "prisma generate",
+    "postinstall": "prisma generate",
+    "seed":        "node prisma/seed.js"
   },
   "dependencies": {
     "@prisma/client":    "^5.10.0",
+    "prisma":            "^5.10.0",
     "bcryptjs":          "^2.4.3",
     "cors":              "^2.8.5",
     "dotenv":            "^16.4.1",
@@ -17,7 +20,6 @@
     "morgan":            "^1.10.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3",
-    "prisma":  "^5.10.0"
+    "nodemon": "^3.0.3"
   }
 }

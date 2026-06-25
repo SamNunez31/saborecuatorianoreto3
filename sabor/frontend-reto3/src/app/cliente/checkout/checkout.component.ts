@@ -76,7 +76,13 @@ import { Tarjeta, Mesa } from '../../core/models';
                   @if (checkoutForm.get('tipoEntrega')?.value === 'retiro') {
                     <fieldset class="mb-4">
                       <legend class="fw-semibold mb-2" style="font-size:14px">Mesa (opcional)</legend>
-                      @if (mesas().length) {
+                      @if (mesasLoading()) {
+                        <p class="text-muted" style="font-size:13px">
+                          <span class="spinner-border spinner-border-sm me-2"></span>Cargando mesas...
+                        </p>
+                      } @else if (mesasError()) {
+                        <p class="text-muted" style="font-size:13px">No se pudieron cargar las mesas.</p>
+                      } @else if (mesas().length) {
                         <select class="form-select" formControlName="mesaId">
                           <option [ngValue]="null">Sin mesa asignada</option>
                           @for (m of mesas(); track m.id) {
@@ -87,7 +93,7 @@ import { Tarjeta, Mesa } from '../../core/models';
                           }
                         </select>
                       } @else {
-                        <p class="text-muted" style="font-size:13px">Cargando mesas...</p>
+                        <p class="text-muted" style="font-size:13px">No hay mesas configuradas aún.</p>
                       }
                     </fieldset>
                   }
@@ -171,9 +177,11 @@ export class CheckoutComponent implements OnInit {
   private toast       = inject(ToastService);
   router              = inject(Router);
 
-  loading   = signal(false);
-  tarjetas_ = signal<Tarjeta[]>([]);
-  mesas     = signal<Mesa[]>([]);
+  loading      = signal(false);
+  tarjetas_    = signal<Tarjeta[]>([]);
+  mesas        = signal<Mesa[]>([]);
+  mesasLoading = signal(true);
+  mesasError   = signal(false);
 
   checkoutForm = this.fb.group({
     tipoEntrega:  ['retiro', Validators.required],
@@ -200,7 +208,10 @@ export class CheckoutComponent implements OnInit {
   ngOnInit(): void {
     if (!this.cart.count()) { this.router.navigate(['/menu']); return; }
     this.tarjetasSvc.getAll().subscribe({ next: t => this.tarjetas.set(t) });
-    this.mesasSvc.getAll().subscribe({ next: m => this.mesas.set(m) });
+    this.mesasSvc.getAll().subscribe({
+      next:  m => { this.mesas.set(m); this.mesasLoading.set(false); },
+      error: () => { this.mesasLoading.set(false); this.mesasError.set(true); }
+    });
   }
 
   confirmar(): void {

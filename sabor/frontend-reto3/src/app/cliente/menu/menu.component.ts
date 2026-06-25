@@ -123,10 +123,7 @@ import { Plato, CategoriaPlato } from '../../core/models';
               </p>
 
               <!-- Ingredientes -->
-              @if (loadingModal()) {
-                <div class="text-center py-3"><div class="spinner-border spinner-border-sm" style="color:var(--se-dorado)"></div></div>
-              }
-              @if (!loadingModal() && platoModal()!.platoIngredientes?.length) {
+              @if (platoModal()!.platoIngredientes?.length) {
                 <div class="mb-4">
                   <h3 class="fw-semibold mb-3" style="font-size:14px">Personaliza tu pedido</h3>
                   <div class="d-flex flex-column gap-2">
@@ -184,9 +181,8 @@ export class MenuComponent implements OnInit {
   busqueda   = signal('');
   loading    = signal(true);
 
-  platoModal             = signal<Plato | null>(null);
-  loadingModal           = signal(false);
-  qtyModal               = signal(1);
+  platoModal               = signal<Plato | null>(null);
+  qtyModal                 = signal(1);
   ingredientesRemovidosSet = signal<Set<number>>(new Set());
 
   platosVisibles = computed(() => {
@@ -211,11 +207,6 @@ export class MenuComponent implements OnInit {
     this.platoModal.set(p);
     this.qtyModal.set(1);
     this.ingredientesRemovidosSet.set(new Set());
-    this.loadingModal.set(true);
-    this.svc.getById(p.id).subscribe({
-      next: full => { this.platoModal.set(full); this.loadingModal.set(false); },
-      error: () => { this.loadingModal.set(false); }
-    });
   }
 
   cerrarModal(): void {
