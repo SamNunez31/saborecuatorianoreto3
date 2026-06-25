@@ -25,6 +25,7 @@ export const routes: Routes = [
       { path: 'ventas',    loadComponent: () => import('./admin/ventas/ventas.component').then(m => m.VentasComponent) },
       { path: 'platos',    loadComponent: () => import('./admin/platos/platos.component').then(m => m.PlatosAdminComponent) },
       { path: 'clientes',  loadComponent: () => import('./admin/clientes/clientes.component').then(m => m.ClientesAdminComponent) },
+      { path: 'mesas',     loadComponent: () => import('./admin/mesas/mesas.component').then(m => m.MesasAdminComponent) },
     ]
   },
   { path: '**', redirectTo: '' }

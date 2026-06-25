@@ -11,11 +11,20 @@ export class CartService {
   iva      = computed(() => this.subtotal() * 0.15);
   total    = computed(() => this.subtotal() + this.iva());
 
-  add(plato: { id: number; nombre: string; precio: number }): void {
+  add(plato: { id: number; nombre: string; precio: number }, ingredientesRemovidos: number[] = []): void {
     const items = [...this.items()];
     const found = items.find(i => i.id === plato.id);
-    if (found) found.cantidad++;
-    else items.push({ id: plato.id, nombre: plato.nombre, precio: Number(plato.precio), cantidad: 1 });
+    if (found) {
+      found.cantidad++;
+      if (!found.ingredientesRemovidos?.length && ingredientesRemovidos.length) {
+        found.ingredientesRemovidos = ingredientesRemovidos;
+      }
+    } else {
+      items.push({
+        id: plato.id, nombre: plato.nombre, precio: Number(plato.precio), cantidad: 1,
+        ...(ingredientesRemovidos.length ? { ingredientesRemovidos } : {})
+      });
+    }
     this._save(items);
   }
   inc(id: number): void { this._mutate(id, i => i.cantidad++); }

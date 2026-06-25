@@ -2,18 +2,27 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const PedidoModel = {
-  create(clienteId, { items, tipoEntrega, observaciones }, mapa) {
+  create(clienteId, { items, tipoEntrega, observaciones, mesaId }, mapa) {
     return prisma.pedido.create({
       data: {
         clienteId,
         tipoEntrega,
         observaciones,
+        mesaId: mesaId ? parseInt(mesaId) : null,
         detalles: {
           create: items.map(i => ({
             platoId:        i.platoId,
             cantidad:       i.cantidad,
             precioUnitario: mapa[i.platoId].precio,
-            nota:           i.nota || null
+            nota:           i.nota || null,
+            ...(i.ingredientesRemovidos?.length ? {
+              detalleIngredientes: {
+                create: i.ingredientesRemovidos.map(ingredienteId => ({
+                  ingredienteId: parseInt(ingredienteId),
+                  accion: 'quitar'
+                }))
+              }
+            } : {})
           }))
         }
       },

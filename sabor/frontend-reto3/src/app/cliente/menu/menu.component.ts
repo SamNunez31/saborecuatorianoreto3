@@ -56,7 +56,8 @@ import { Plato, CategoriaPlato } from '../../core/models';
           }
           @for (p of platosVisibles(); track p.id) {
             <div class="col-sm-6 col-lg-4" role="listitem">
-              <article class="plato-card card h-100 border-0 shadow-sm" [attr.aria-label]="p.nombre">
+              <article class="plato-card card h-100 border-0 shadow-sm" [attr.aria-label]="p.nombre"
+                       style="cursor:pointer" (click)="abrirModal(p)">
                 <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:200px" aria-hidden="true">
                   @if (p.imagenUrl) { <img [src]="p.imagenUrl" [alt]="p.nombre" style="width:100%;height:100%;object-fit:cover" loading="lazy"> }
                   @else { <span style="font-size:48px">{{ emojiCategoria(p.categoria?.nombre) }}</span> }
@@ -71,7 +72,8 @@ import { Plato, CategoriaPlato } from '../../core/models';
                     </span>
                     <button class="btn btn-negro btn-sm rounded-circle d-flex align-items-center justify-content-center"
                             style="width:36px;height:36px;font-size:20px"
-                            (click)="agregar(p)" [attr.aria-label]="'Agregar ' + p.nombre + ' al carrito'">+</button>
+                            (click)="$event.stopPropagation(); abrirModal(p)"
+                            [attr.aria-label]="'Personalizar y agregar ' + p.nombre">+</button>
                   </div>
                 </div>
               </article>
@@ -86,6 +88,89 @@ import { Plato, CategoriaPlato } from '../../core/models';
         </div>
       </div>
     </main>
+
+    <!-- MODAL DE PERSONALIZACIÓN -->
+    @if (platoModal()) {
+      <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true"
+           style="background:rgba(0,0,0,.5)" (click)="cerrarModal()">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document" (click)="$event.stopPropagation()">
+          <div class="modal-content border-0 rounded-4 overflow-hidden">
+
+            <!-- Imagen/cabecera -->
+            <div class="position-relative" style="height:200px;background:#f5f0e8">
+              @if (platoModal()!.imagenUrl) {
+                <img [src]="platoModal()!.imagenUrl" [alt]="platoModal()!.nombre"
+                     style="width:100%;height:100%;object-fit:cover">
+              } @else {
+                <div class="d-flex align-items-center justify-content-center h-100">
+                  <span style="font-size:72px">{{ emojiCategoria(platoModal()!.categoria?.nombre) }}</span>
+                </div>
+              }
+              <button class="btn btn-light btn-sm rounded-circle position-absolute top-0 end-0 m-2"
+                      (click)="cerrarModal()" aria-label="Cerrar">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="modal-body p-4">
+              <span class="eyebrow" style="font-size:11px">{{ platoModal()!.categoria?.nombre }}</span>
+              <h2 style="font-family:var(--se-serif);font-size:1.4rem;margin:.4rem 0">{{ platoModal()!.nombre }}</h2>
+              @if (platoModal()!.descripcion) {
+                <p class="text-muted mb-3" style="font-size:14px">{{ platoModal()!.descripcion }}</p>
+              }
+              <p class="fw-bold mb-4" style="color:var(--se-dorado);font-size:1.2rem">
+                {{ platoModal()!.precio | currency:'USD':'symbol':'1.2-2' }}
+              </p>
+
+              <!-- Ingredientes -->
+              @if (loadingModal()) {
+                <div class="text-center py-3"><div class="spinner-border spinner-border-sm" style="color:var(--se-dorado)"></div></div>
+              }
+              @if (!loadingModal() && platoModal()!.platoIngredientes?.length) {
+                <div class="mb-4">
+                  <h3 class="fw-semibold mb-3" style="font-size:14px">Personaliza tu pedido</h3>
+                  <div class="d-flex flex-column gap-2">
+                    @for (pi of platoModal()!.platoIngredientes!; track pi.id) {
+                      <label class="d-flex align-items-center gap-3 p-2 rounded-3"
+                             [style.background]="pi.esRemovible ? '#fafafa' : 'transparent'"
+                             [style.cursor]="pi.esRemovible ? 'pointer' : 'default'">
+                        <input type="checkbox"
+                               [checked]="!ingredientesRemovidosSet().has(pi.ingrediente.id)"
+                               [disabled]="!pi.esRemovible"
+                               (change)="toggleIngrediente(pi.ingrediente.id)"
+                               class="form-check-input mt-0" style="width:18px;height:18px">
+                        <span style="font-size:14px">{{ pi.ingrediente.nombre }}</span>
+                        @if (!pi.esRemovible) {
+                          <span class="badge ms-auto" style="background:#f0e8d4;color:#8a7340;font-weight:400;font-size:11px">fijo</span>
+                        }
+                      </label>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Cantidad -->
+              <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="fw-semibold" style="font-size:14px">Cantidad</span>
+                <div class="d-flex align-items-center border rounded-3 overflow-hidden">
+                  <button class="btn btn-light px-3 py-2" (click)="qtyModal() > 1 && qtyModal.set(qtyModal() - 1)">−</button>
+                  <span class="px-3 fw-bold" style="min-width:36px;text-align:center">{{ qtyModal() }}</span>
+                  <button class="btn btn-light px-3 py-2" (click)="qtyModal.set(qtyModal() + 1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+              <button class="btn btn-outline-secondary me-auto" (click)="cerrarModal()">Cancelar</button>
+              <button class="btn btn-negro px-4 py-2 fw-semibold" (click)="agregarConPersonalizacion()">
+                <i class="bi bi-cart-plus me-2"></i>Agregar al carrito
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    }
   `
 })
 export class MenuComponent implements OnInit {
@@ -98,6 +183,11 @@ export class MenuComponent implements OnInit {
   catActual  = signal<number | null>(null);
   busqueda   = signal('');
   loading    = signal(true);
+
+  platoModal             = signal<Plato | null>(null);
+  loadingModal           = signal(false);
+  qtyModal               = signal(1);
+  ingredientesRemovidosSet = signal<Set<number>>(new Set());
 
   platosVisibles = computed(() => {
     const cat = this.catActual();
@@ -116,7 +206,38 @@ export class MenuComponent implements OnInit {
   }
 
   filtrar(id: number | null): void { this.catActual.set(id); }
-  agregar(p: Plato): void { this.cart.add(p); this.toast.success(`${p.nombre} agregado al carrito`); }
+
+  abrirModal(p: Plato): void {
+    this.platoModal.set(p);
+    this.qtyModal.set(1);
+    this.ingredientesRemovidosSet.set(new Set());
+    this.loadingModal.set(true);
+    this.svc.getById(p.id).subscribe({
+      next: full => { this.platoModal.set(full); this.loadingModal.set(false); },
+      error: () => { this.loadingModal.set(false); }
+    });
+  }
+
+  cerrarModal(): void {
+    this.platoModal.set(null);
+    this.ingredientesRemovidosSet.set(new Set());
+    this.qtyModal.set(1);
+  }
+
+  toggleIngrediente(id: number): void {
+    const set = new Set(this.ingredientesRemovidosSet());
+    if (set.has(id)) set.delete(id); else set.add(id);
+    this.ingredientesRemovidosSet.set(set);
+  }
+
+  agregarConPersonalizacion(): void {
+    const p = this.platoModal();
+    if (!p) return;
+    const removidos = Array.from(this.ingredientesRemovidosSet());
+    for (let i = 0; i < this.qtyModal(); i++) this.cart.add(p, i === 0 ? removidos : []);
+    this.toast.success(`${p.nombre} agregado al carrito`);
+    this.cerrarModal();
+  }
 
   emojiCategoria(nombre?: string): string {
     const n = (nombre || '').toLowerCase();

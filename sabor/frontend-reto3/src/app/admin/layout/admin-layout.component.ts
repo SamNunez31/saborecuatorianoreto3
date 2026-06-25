@@ -23,6 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
           <a class="nav-link d-flex align-items-center gap-2 px-3 py-2 mb-1" routerLink="/admin/ventas"   routerLinkActive="active"><span aria-hidden="true">💰</span> Ventas del día</a>
           <a class="nav-link d-flex align-items-center gap-2 px-3 py-2 mb-1" routerLink="/admin/platos"   routerLinkActive="active"><span aria-hidden="true">🍽</span> Platos</a>
           <a class="nav-link d-flex align-items-center gap-2 px-3 py-2 mb-1" routerLink="/admin/clientes" routerLinkActive="active"><span aria-hidden="true">👥</span> Clientes</a>
+          <a class="nav-link d-flex align-items-center gap-2 px-3 py-2 mb-1" routerLink="/admin/mesas"    routerLinkActive="active"><span aria-hidden="true">🪑</span> Mesas</a>
         </nav>
         <div class="p-3 border-top" style="border-color:rgba(201,150,26,.15)!important">
           <div class="text-white-50 mb-2" style="font-size:13px">{{ auth.currentUser()?.nombre }}</div>

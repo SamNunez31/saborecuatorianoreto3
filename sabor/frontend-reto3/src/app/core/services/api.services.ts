@@ -8,7 +8,8 @@ import {
   Factura, VentasDia,
   Pago, CreatePagoDto,
   Tarjeta, CreateTarjetaDto,
-  Cliente, DashboardStats
+  Cliente, DashboardStats,
+  Mesa, EstadoMesa
 } from '../models';
 
 const API = environment.apiUrl;
@@ -62,6 +63,14 @@ export class TarjetasService {
   create(data: CreateTarjetaDto): Observable<Tarjeta> { return this.http.post<Tarjeta>(`${API}/tarjetas`, data); }
   delete(id: number): Observable<{ message: string }> { return this.http.delete<{ message: string }>(`${API}/tarjetas/${id}`); }
   setPrincipal(id: number): Observable<Tarjeta>  { return this.http.put<Tarjeta>(`${API}/tarjetas/${id}/principal`, {}); }
+}
+
+// ── MESAS ────────────────────────────────────────────────
+@Injectable({ providedIn: 'root' })
+export class MesasService {
+  constructor(private http: HttpClient) {}
+  getAll(): Observable<Mesa[]> { return this.http.get<Mesa[]>(`${API}/mesas`); }
+  updateEstado(id: number, estado: EstadoMesa): Observable<Mesa> { return this.http.put<Mesa>(`${API}/mesas/${id}/estado`, { estado }); }
 }
 
 // ── ADMIN ────────────────────────────────────────────────

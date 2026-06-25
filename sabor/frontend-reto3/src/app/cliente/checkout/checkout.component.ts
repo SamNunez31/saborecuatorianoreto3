@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
-import { PedidosService, PagosService, TarjetasService } from '../../core/services/api.services';
+import { PedidosService, PagosService, TarjetasService, MesasService } from '../../core/services/api.services';
 import { ToastService } from '../../core/services/toast.service';
-import { Tarjeta } from '../../core/models';
+import { Tarjeta, Mesa } from '../../core/models';
 
 @Component({
   selector: 'app-checkout',
@@ -30,9 +30,16 @@ import { Tarjeta } from '../../core/models';
               </div>
               <div class="card-body px-4">
                 @for (i of cart.items(); track i.id) {
-                  <div class="d-flex justify-content-between py-2 border-bottom" style="font-size:14px">
-                    <span>{{ i.cantidad }}× {{ i.nombre }}</span>
-                    <span class="fw-semibold">{{ i.precio * i.cantidad | currency:'USD':'symbol':'1.2-2' }}</span>
+                  <div class="py-2 border-bottom" style="font-size:14px">
+                    <div class="d-flex justify-content-between">
+                      <span>{{ i.cantidad }}× {{ i.nombre }}</span>
+                      <span class="fw-semibold">{{ i.precio * i.cantidad | currency:'USD':'symbol':'1.2-2' }}</span>
+                    </div>
+                    @if (i.ingredientesRemovidos?.length) {
+                      <div class="text-muted mt-1" style="font-size:12px">
+                        <i class="bi bi-dash-circle me-1"></i>Sin: ver personalización
+                      </div>
+                    }
                   </div>
                 }
                 <div class="d-flex justify-content-between mt-2" style="font-size:14px;color:var(--se-gris)"><span>Subtotal</span><span>{{ cart.subtotal() | currency:'USD':'symbol':'1.2-2' }}</span></div>
@@ -41,7 +48,7 @@ import { Tarjeta } from '../../core/models';
               </div>
             </section>
 
-            <!-- Form con Reactive Forms -->
+            <!-- Form -->
             <section class="card border-0 shadow-sm rounded-4" aria-labelledby="opciones-title">
               <div class="card-header bg-white border-bottom rounded-top-4 py-3 px-4">
                 <h2 id="opciones-title" class="m-0 fw-semibold" style="font-size:1rem">Opciones de pedido</h2>
@@ -64,6 +71,26 @@ import { Tarjeta } from '../../core/models';
                       }
                     </div>
                   </fieldset>
+
+                  <!-- Selector de mesa (solo retiro) -->
+                  @if (checkoutForm.get('tipoEntrega')?.value === 'retiro') {
+                    <fieldset class="mb-4">
+                      <legend class="fw-semibold mb-2" style="font-size:14px">Mesa (opcional)</legend>
+                      @if (mesas().length) {
+                        <select class="form-select" formControlName="mesaId">
+                          <option [ngValue]="null">Sin mesa asignada</option>
+                          @for (m of mesas(); track m.id) {
+                            <option [ngValue]="m.id" [disabled]="m.estado !== 'disponible'">
+                              Mesa {{ m.numero }} — {{ m.capacidad }} personas
+                              {{ m.estado !== 'disponible' ? '(' + m.estado + ')' : '' }}
+                            </option>
+                          }
+                        </select>
+                      } @else {
+                        <p class="text-muted" style="font-size:13px">Cargando mesas...</p>
+                      }
+                    </fieldset>
+                  }
 
                   <!-- Forma de pago -->
                   <fieldset class="mb-4">
@@ -135,21 +162,24 @@ import { Tarjeta } from '../../core/models';
   `
 })
 export class CheckoutComponent implements OnInit {
-  private fb       = inject(FormBuilder);
-  cart     = inject(CartService);
-  private pedidos  = inject(PedidosService);
-  private pagos    = inject(PagosService);
+  private fb          = inject(FormBuilder);
+  cart                = inject(CartService);
+  private pedidos     = inject(PedidosService);
+  private pagos       = inject(PagosService);
   private tarjetasSvc = inject(TarjetasService);
-  private toast    = inject(ToastService);
-  router   = inject(Router);
+  private mesasSvc    = inject(MesasService);
+  private toast       = inject(ToastService);
+  router              = inject(Router);
 
-  loading  = signal(false);
+  loading   = signal(false);
   tarjetas_ = signal<Tarjeta[]>([]);
+  mesas     = signal<Mesa[]>([]);
 
   checkoutForm = this.fb.group({
     tipoEntrega:  ['retiro', Validators.required],
     formaPagoId:  [null as number | null, Validators.required],
     tarjetaId:    [null as number | null],
+    mesaId:       [null as number | null],
     observaciones:['']
   });
 
@@ -169,7 +199,8 @@ export class CheckoutComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.cart.count()) { this.router.navigate(['/menu']); return; }
-    this.tarjetasSvc.getAll().subscribe({next: t => this.tarjetas.set(t)});
+    this.tarjetasSvc.getAll().subscribe({ next: t => this.tarjetas.set(t) });
+    this.mesasSvc.getAll().subscribe({ next: m => this.mesas.set(m) });
   }
 
   confirmar(): void {
@@ -177,8 +208,13 @@ export class CheckoutComponent implements OnInit {
     const fv = this.checkoutForm.value;
     if ([2,3].includes(fv.formaPagoId!) && !fv.tarjetaId) { this.toast.error('Selecciona una tarjeta'); return; }
     this.loading.set(true);
-    const items = this.cart.items().map(i => ({ platoId: i.id, cantidad: i.cantidad }));
-    this.pedidos.create({ items, tipoEntrega: fv.tipoEntrega as 'retiro'|'domicilio', observaciones: fv.observaciones || '' }).subscribe({
+    const items = this.cart.items().map(i => ({
+      platoId: i.id,
+      cantidad: i.cantidad,
+      ingredientesRemovidos: i.ingredientesRemovidos || []
+    }));
+    const mesaId = fv.tipoEntrega === 'retiro' && fv.mesaId ? fv.mesaId : null;
+    this.pedidos.create({ items, tipoEntrega: fv.tipoEntrega as 'retiro'|'domicilio', observaciones: fv.observaciones || '', mesaId }).subscribe({
       next: ({ factura }) => {
         this.pagos.create({ facturaId: factura.id, formaPagoId: fv.formaPagoId!, tarjetaId: fv.tarjetaId ?? undefined, monto: factura.total }).subscribe({
           next: () => { this.cart.clear(); this.toast.success('¡Pedido confirmado!'); this.router.navigate(['/mis-pedidos']); },
@@ -188,5 +224,4 @@ export class CheckoutComponent implements OnInit {
       error: (e) => { this.toast.error(e.error?.error || 'Error al crear el pedido'); this.loading.set(false); }
     });
   }
-
 }

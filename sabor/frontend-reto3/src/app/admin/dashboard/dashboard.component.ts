@@ -126,6 +126,7 @@ export class DashboardComponent implements OnInit {
     { ruta:'/admin/platos',   icon:'🍽', titulo:'Menú',           desc:'Agregar, editar o deshabilitar platos' },
     { ruta:'/admin/facturas', icon:'🧾', titulo:'Facturas',       desc:'Historial completo de facturas' },
     { ruta:'/admin/clientes', icon:'👥', titulo:'Clientes',       desc:'Clientes registrados' },
+    { ruta:'/admin/mesas',    icon:'🪑', titulo:'Mesas',           desc:'Estado del salón en tiempo real' },
   ];
 
   ticketPromedio = computed(() => {

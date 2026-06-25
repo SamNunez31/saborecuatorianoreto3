@@ -17,7 +17,10 @@ const PlatoModel = {
   getById(id) {
     return prisma.plato.findUnique({
       where: { id: parseInt(id) },
-      include: { categoria: true }
+      include: {
+        categoria: true,
+        platoIngredientes: { include: { ingrediente: true }, orderBy: { id: 'asc' } }
+      }
     });
   },
 

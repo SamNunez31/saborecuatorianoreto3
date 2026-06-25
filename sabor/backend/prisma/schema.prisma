@@ -76,8 +76,9 @@ model Plato {
   precio      Decimal        @db.Decimal(8, 2)
   disponible  Boolean        @default(true)
   imagenUrl   String?        @map("imagen_url")
-  categoria   CategoriaPlato @relation(fields: [categoriaId], references: [id])
-  detalles    DetallePedido[]
+  categoria         CategoriaPlato     @relation(fields: [categoriaId], references: [id])
+  detalles          DetallePedido[]
+  platoIngredientes PlatoIngrediente[]
   @@map("platos")
 }
 
@@ -97,8 +98,10 @@ model Pedido {
   estado        String          @default("pendiente") @db.VarChar(30)
   observaciones String?
   fechaPedido   DateTime        @default(now()) @map("fecha_pedido")
+  mesaId        Int?            @map("mesa_id")
   cliente       Cliente         @relation(fields: [clienteId], references: [id])
   usuario       Usuario?        @relation(fields: [usuarioId], references: [id])
+  mesa          Mesa?           @relation(fields: [mesaId], references: [id])
   detalles      DetallePedido[]
   factura       Factura?
   @@map("pedidos")
@@ -111,8 +114,9 @@ model DetallePedido {
   cantidad       Int
   precioUnitario Decimal @map("precio_unitario") @db.Decimal(8, 2)
   nota           String?
-  pedido         Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  plato          Plato   @relation(fields: [platoId], references: [id])
+  pedido              Pedido               @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  plato               Plato                @relation(fields: [platoId], references: [id])
+  detalleIngredientes DetalleIngrediente[]
   @@map("detalle_pedido")
 }
 
@@ -143,4 +147,43 @@ model Pago {
   formaPago   FormaPago @relation(fields: [formaPagoId], references: [id])
   tarjeta     Tarjeta?  @relation(fields: [tarjetaId], references: [id])
   @@map("pagos")
+}
+
+model Mesa {
+  id          Int      @id @default(autoincrement())
+  numero      Int      @unique
+  capacidad   Int
+  estado      String   @default("disponible") @db.VarChar(20)
+  descripcion String?
+  pedidos     Pedido[]
+  @@map("mesas")
+}
+
+model Ingrediente {
+  id                  Int                  @id @default(autoincrement())
+  nombre              String               @db.VarChar(100)
+  tipo                String?              @db.VarChar(50)
+  platoIngredientes   PlatoIngrediente[]
+  detalleIngredientes DetalleIngrediente[]
+  @@map("ingredientes")
+}
+
+model PlatoIngrediente {
+  id            Int         @id @default(autoincrement())
+  platoId       Int         @map("plato_id")
+  ingredienteId Int         @map("ingrediente_id")
+  esRemovible   Boolean     @default(false) @map("es_removible")
+  plato         Plato       @relation(fields: [platoId], references: [id], onDelete: Cascade)
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id])
+  @@map("plato_ingredientes")
+}
+
+model DetalleIngrediente {
+  id              Int           @id @default(autoincrement())
+  detallePedidoId Int           @map("detalle_pedido_id")
+  ingredienteId   Int           @map("ingrediente_id")
+  accion          String        @db.VarChar(20)
+  detallePedido   DetallePedido @relation(fields: [detallePedidoId], references: [id], onDelete: Cascade)
+  ingrediente     Ingrediente   @relation(fields: [ingredienteId], references: [id])
+  @@map("detalle_ingredientes")
 }

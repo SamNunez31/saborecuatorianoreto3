@@ -5,17 +5,23 @@ export interface AuthResponse   { token: string; usuario: Usuario; }
 export interface Usuario        { id: number; nombre: string; email: string; rol: string; }
 
 // ── CATÁLOGO ─────────────────────────────────────────────
-export interface CategoriaPlato { id: number; nombre: string; }
-export interface Plato          { id: number; nombre: string; descripcion?: string; precio: number; disponible: boolean; imagenUrl?: string; categoriaId: number; categoria?: CategoriaPlato; createdAt?: string; }
-export interface CreatePlatoDto { nombre: string; descripcion?: string; precio: number; categoriaId: number; imagenUrl?: string; }
+export interface CategoriaPlato  { id: number; nombre: string; }
+export interface Ingrediente     { id: number; nombre: string; tipo?: string; }
+export interface PlatoIngrediente{ id: number; platoId: number; ingredienteId: number; esRemovible: boolean; ingrediente: Ingrediente; }
+export interface Plato           { id: number; nombre: string; descripcion?: string; precio: number; disponible: boolean; imagenUrl?: string; categoriaId: number; categoria?: CategoriaPlato; platoIngredientes?: PlatoIngrediente[]; createdAt?: string; }
+export interface CreatePlatoDto  { nombre: string; descripcion?: string; precio: number; categoriaId: number; imagenUrl?: string; }
+
+// ── MESAS ────────────────────────────────────────────────
+export type EstadoMesa = 'disponible'|'ocupada'|'reservada';
+export interface Mesa { id: number; numero: number; capacidad: number; estado: EstadoMesa; descripcion?: string; pedidos?: Pedido[]; }
 
 // ── PEDIDOS ──────────────────────────────────────────────
 export type EstadoPedido = 'pendiente'|'en_preparacion'|'listo'|'entregado'|'cancelado';
 export type TipoEntrega  = 'retiro'|'domicilio';
-export interface ItemPedido      { platoId: number; cantidad: number; nota?: string; }
-export interface CreatePedidoDto { items: ItemPedido[]; tipoEntrega: TipoEntrega; observaciones?: string; }
+export interface ItemPedido      { platoId: number; cantidad: number; nota?: string; ingredientesRemovidos?: number[]; }
+export interface CreatePedidoDto { items: ItemPedido[]; tipoEntrega: TipoEntrega; observaciones?: string; mesaId?: number | null; }
 export interface DetallePedido   { id: number; cantidad: number; precioUnitario: number; nota?: string; plato?: Plato; }
-export interface Pedido          { id: number; clienteId: number; tipoEntrega: TipoEntrega; estado: EstadoPedido; observaciones?: string; fechaPedido: string; total: number; cliente?: Cliente; detalles: DetallePedido[]; factura?: Factura; }
+export interface Pedido          { id: number; clienteId: number; mesaId?: number | null; tipoEntrega: TipoEntrega; estado: EstadoPedido; observaciones?: string; fechaPedido: string; total: number; cliente?: Cliente; detalles: DetallePedido[]; factura?: Factura; mesa?: Mesa; }
 
 // ── FACTURAS / PAGOS ─────────────────────────────────────
 export type EstadoFactura = 'emitida'|'pagada'|'anulada';
@@ -36,4 +42,4 @@ export interface DashboardStats { ventasHoy: number; pedidosHoy: number; pedidos
 export interface VentasDia      { facturas: Factura[]; resumen: { totalDia: number; totalIva: number; cantPedidos: number }; }
 
 // ── CARRITO ──────────────────────────────────────────────
-export interface CartItem { id: number; nombre: string; precio: number; cantidad: number; }
+export interface CartItem { id: number; nombre: string; precio: number; cantidad: number; ingredientesRemovidos?: number[]; }

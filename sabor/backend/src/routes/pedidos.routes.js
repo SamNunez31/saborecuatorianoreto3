@@ -11,6 +11,7 @@ router.post('/', authMiddleware,
     body('items.*.platoId').isInt().withMessage('ID de plato inválido'),
     body('items.*.cantidad').isInt({ min: 1 }).withMessage('Cantidad debe ser >= 1'),
     body('tipoEntrega').isIn(['retiro', 'domicilio']).withMessage('Tipo de entrega inválido'),
+    body('mesaId').optional().isInt({ min: 1 }).withMessage('Mesa inválida'),
   ],
   validate,
   ctrl.create
