@@ -92,6 +92,16 @@ function passwordsMatch(c: AbstractControl): ValidationErrors | null {
                 <div class="invalid-feedback" role="alert">Ingresa exactamente 10 dígitos numéricos.</div>
               }
             </div>
+            <!-- Cédula -->
+            <div class="col-sm-6">
+              <label for="cedula" class="form-label fw-semibold" style="font-size:13px">Cédula</label>
+              <input id="cedula" type="text" class="form-control" formControlName="cedula"
+                     placeholder="1234567890" maxlength="10"
+                     [class.is-invalid]="f['cedula'].invalid && f['cedula'].touched">
+              @if (f['cedula'].invalid && f['cedula'].touched) {
+                <div class="invalid-feedback" role="alert">Ingresa exactamente 10 dígitos numéricos.</div>
+              }
+            </div>
             <!-- Dirección -->
             <div class="col-sm-6">
               <label for="direccion" class="form-label fw-semibold" style="font-size:13px">Dirección</label>
@@ -131,6 +141,7 @@ export class RegisterComponent {
     password:        ['', [Validators.required, Validators.minLength(6)]],
     passwordConfirm: ['', Validators.required],
     telefono:        ['', [Validators.pattern(/^[0-9]{10}$/)]],
+    cedula:          ['', [Validators.pattern(/^[0-9]{10}$/)]],
     direccion:       ['']
   }, { validators: passwordsMatch });
 
