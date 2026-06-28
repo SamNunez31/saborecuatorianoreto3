@@ -29,6 +29,7 @@ import { IngredientesService } from '../../core/services/api.services';
             <tr>
               <th>Ingrediente</th>
               <th>Tipo</th>
+              <th>Unidad</th>
               <th>Stock actual</th>
               <th>Stock mínimo</th>
               <th>Estado</th>
@@ -43,6 +44,7 @@ import { IngredientesService } from '../../core/services/api.services';
               <tr [class.table-danger]="ing.stock <= ing.stockMinimo">
                 <td class="fw-semibold">{{ ing.nombre }}</td>
                 <td><span class="badge bg-secondary">{{ ing.tipo || 'base' }}</span></td>
+                <td>{{ ing.unidad }}</td>
                 <td>
                   @if (editando()?.id === ing.id) {
                     <input type="number" class="form-control form-control-sm" style="width:80px"
@@ -59,6 +61,19 @@ import { IngredientesService } from '../../core/services/api.services';
                            [(ngModel)]="editando()!.stockMinimo" min="0">
                   } @else {
                     {{ ing.stockMinimo }}
+                  }
+                </td>
+                <td>
+                  @if (editando()?.id === ing.id) {
+                    <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="editando()!.unidad">
+                      <option value="unidad">unidad</option>
+                      <option value="kg">kg</option>
+                      <option value="litros">litros</option>
+                      <option value="gramos">gramos</option>
+                      <option value="ml">ml</option>
+                    </select>
+                  } @else {
+                    {{ ing.unidad }}
                   }
                 </td>
                 <td>
@@ -110,7 +125,7 @@ export class InventarioComponent implements OnInit {
   guardar() {
     const e = this.editando();
     if (!e) return;
-    this.svc.updateStock(e.id, e.stock, e.stockMinimo).subscribe({
+    this.svc.updateStock(e.id, e.stock, e.stockMinimo, e.unidad).subscribe({
       next: () => { this.load(); this.editando.set(null); },
       error: () => alert('Error al guardar')
     });

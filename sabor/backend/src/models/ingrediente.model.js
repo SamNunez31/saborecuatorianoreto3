@@ -12,12 +12,13 @@ const IngredienteModel = {
     });
   },
 
-  updateStock(id, stock, stockMinimo) {
+  updateStock(id, stock, stockMinimo, unidad) {
     return prisma.ingrediente.update({
       where: { id: parseInt(id) },
       data: {
         stock:       parseInt(stock),
-        stockMinimo: stockMinimo != null ? parseInt(stockMinimo) : undefined
+        stockMinimo: stockMinimo != null ? parseInt(stockMinimo) : undefined,
+        unidad:      unidad || undefined
       }
     });
   },

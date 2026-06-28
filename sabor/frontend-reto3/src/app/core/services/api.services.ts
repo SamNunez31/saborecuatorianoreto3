@@ -78,8 +78,8 @@ export class MesasService {
 export class IngredientesService {
   constructor(private http: HttpClient) {}
   getAll(): Observable<any[]>  { return this.http.get<any[]>(`${API}/ingredientes`); }
-  updateStock(id: number, stock: number, stockMinimo: number): Observable<any> {
-    return this.http.put<any>(`${API}/ingredientes/${id}/stock`, { stock, stockMinimo });
+  updateStock(id: number, stock: number, stockMinimo: number, unidad?: string): Observable<any> {
+    return this.http.put<any>(`${API}/ingredientes/${id}/stock`, { stock, stockMinimo, unidad });
   }
   getAlertas(): Observable<any[]> { return this.http.get<any[]>(`${API}/ingredientes/alertas`); }
 }

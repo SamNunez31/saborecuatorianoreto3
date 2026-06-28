@@ -25,6 +25,10 @@ import { ProveedoresService } from '../../core/services/api.services';
             <input type="text" class="form-control" [(ngModel)]="form.nombre" placeholder="Nombre del proveedor">
           </div>
           <div class="col-md-6">
+            <label class="form-label fw-semibold" style="font-size:13px">RUC</label>
+            <input type="text" class="form-control" [(ngModel)]="form.ruc" placeholder="0999999999001" maxlength="13">
+          </div>
+          <div class="col-md-6">
             <label class="form-label fw-semibold" style="font-size:13px">Contacto</label>
             <input type="text" class="form-control" [(ngModel)]="form.contacto" placeholder="Nombre del contacto">
           </div>
@@ -50,6 +54,7 @@ import { ProveedoresService } from '../../core/services/api.services';
           <thead style="background:#f8f5f0">
             <tr>
               <th>Nombre</th>
+              <th>RUC</th>
               <th>Contacto</th>
               <th>Teléfono</th>
               <th>Email</th>
@@ -64,6 +69,7 @@ import { ProveedoresService } from '../../core/services/api.services';
             @for (p of proveedores(); track p.id) {
               <tr>
                 <td class="fw-semibold">{{ p.nombre }}</td>
+                <td>{{ p.ruc || '—' }}</td>
                 <td>{{ p.contacto || '—' }}</td>
                 <td>{{ p.telefono || '—' }}</td>
                 <td>{{ p.email || '—' }}</td>
@@ -90,7 +96,7 @@ export class ProveedoresComponent implements OnInit {
   mostrarForm  = signal(false);
   editando     = signal<any>(null);
 
-  form: any = { nombre: '', contacto: '', telefono: '', email: '' };
+  form: any = { nombre: '', ruc: '', contacto: '', telefono: '', email: '' };
 
   ngOnInit() { this.load(); }
 
@@ -102,12 +108,12 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
-  abrirFormulario() { this.form = { nombre: '', contacto: '', telefono: '', email: '' }; this.editando.set(null); this.mostrarForm.set(true); }
+  abrirFormulario() { this.form = { nombre: '', ruc: '', contacto: '', telefono: '', email: '' }; this.editando.set(null); this.mostrarForm.set(true); }
   cerrarFormulario() { this.mostrarForm.set(false); this.editando.set(null); }
 
   editar(p: any) {
     this.editando.set(p);
-    this.form = { nombre: p.nombre, contacto: p.contacto, telefono: p.telefono, email: p.email };
+    this.form = { nombre: p.nombre, ruc: p.ruc, contacto: p.contacto, telefono: p.telefono, email: p.email };
     this.mostrarForm.set(true);
   }
 

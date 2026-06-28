@@ -165,6 +165,7 @@ model Ingrediente {
   tipo                String?                @default("base") @db.VarChar(50)
   stock               Int                    @default(0)
   stockMinimo         Int                    @default(5) @map("stock_minimo")
+  unidad              String                 @default("unidad") @db.VarChar(20)
   platoIngredientes   PlatoIngrediente[]
   detalleIngredientes DetalleIngrediente[]
   proveedores         ProveedorIngrediente[]
@@ -184,6 +185,7 @@ model PlatoIngrediente {
 model Proveedor {
   id           Int                    @id @default(autoincrement())
   nombre       String                 @db.VarChar(150)
+  ruc          String?                @db.VarChar(13)
   contacto     String?                @db.VarChar(100)
   telefono     String?                @db.VarChar(20)
   email        String?                @db.VarChar(150)
