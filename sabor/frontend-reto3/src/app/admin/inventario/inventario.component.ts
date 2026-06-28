@@ -46,12 +46,16 @@ import { IngredientesService } from '../../core/services/api.services';
                 <td><span class="badge bg-secondary">{{ ing.tipo || 'base' }}</span></td>
                 <td>
                   @if (editando()?.id === ing.id) {
-                    <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="editando()!.unidad">
-                      <option value="unidad">unidad</option>
-                      <option value="kg">kg</option>
-                      <option value="litros">litros</option>
-                      <option value="gramos">gramos</option>
+                    <select class="form-select form-select-sm" style="width:110px" [(ngModel)]="editando()!.unidad">
+                      <option value="unidad">Unidad</option>
+                      <option value="kg">Kg</option>
+                      <option value="g">Gramos</option>
+                      <option value="litros">Litros</option>
                       <option value="ml">ml</option>
+                      <option value="caja">Caja</option>
+                      <option value="saco">Saco</option>
+                      <option value="atado">Atado</option>
+                      <option value="funda">Funda</option>
                     </select>
                   } @else {
                     {{ ing.unidad }}
