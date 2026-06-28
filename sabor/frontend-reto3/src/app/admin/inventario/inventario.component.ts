@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IngredientesService } from '../../core/services/api.services';
+import { IngredientesService, UnidadesService } from '../../core/services/api.services';
 
 @Component({
   selector: 'app-inventario',
@@ -38,7 +38,7 @@ import { IngredientesService } from '../../core/services/api.services';
           </thead>
           <tbody>
             @if (loading()) {
-              <tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr>
+              <tr><td colspan="7" class="text-center py-4 text-muted">Cargando...</td></tr>
             }
             @for (ing of ingredientes(); track ing.id) {
               <tr [class.table-danger]="ing.stock <= ing.stockMinimo">
@@ -46,19 +46,15 @@ import { IngredientesService } from '../../core/services/api.services';
                 <td><span class="badge bg-secondary">{{ ing.tipo || 'base' }}</span></td>
                 <td>
                   @if (editando()?.id === ing.id) {
-                    <select class="form-select form-select-sm" style="width:110px" [(ngModel)]="editando()!.unidad">
-                      <option value="unidad">Unidad</option>
-                      <option value="kg">Kg</option>
-                      <option value="g">Gramos</option>
-                      <option value="litros">Litros</option>
-                      <option value="ml">ml</option>
-                      <option value="caja">Caja</option>
-                      <option value="saco">Saco</option>
-                      <option value="atado">Atado</option>
-                      <option value="funda">Funda</option>
+                    <select class="form-select form-select-sm" style="width:120px"
+                            [(ngModel)]="editando()!.unidadId">
+                      <option [value]="null">— Sin unidad —</option>
+                      @for (u of unidades(); track u.id) {
+                        <option [value]="u.id">{{ u.nombre }}</option>
+                      }
                     </select>
                   } @else {
-                    {{ ing.unidad }}
+                    {{ ing.unidad?.nombre || '—' }}
                   }
                 </td>
                 <td>
@@ -83,7 +79,7 @@ import { IngredientesService } from '../../core/services/api.services';
                   @if (ing.stock <= ing.stockMinimo) {
                     <span class="badge bg-danger">Stock bajo</span>
                   } @else {
-                    <span class="badge bg-success">OK</span>
+                    <span class="badge bg-success">En stock</span>
                   }
                 </td>
                 <td>
@@ -103,15 +99,17 @@ import { IngredientesService } from '../../core/services/api.services';
   `
 })
 export class InventarioComponent implements OnInit {
-  private svc = inject(IngredientesService);
+  private svc  = inject(IngredientesService);
+  private uSvc = inject(UnidadesService);
 
   ingredientes = signal<any[]>([]);
+  unidades     = signal<any[]>([]);
   loading      = signal(true);
   editando     = signal<any>(null);
 
   alertas = computed(() => this.ingredientes().filter(i => i.stock <= i.stockMinimo));
 
-  ngOnInit() { this.load(); }
+  ngOnInit() { this.load(); this.uSvc.getAll().subscribe(u => this.unidades.set(u)); }
 
   load() {
     this.loading.set(true);
@@ -121,14 +119,12 @@ export class InventarioComponent implements OnInit {
     });
   }
 
-  editar(ing: any) {
-    this.editando.set({ ...ing });
-  }
+  editar(ing: any) { this.editando.set({ ...ing, unidadId: ing.unidad?.id ?? null }); }
 
   guardar() {
     const e = this.editando();
     if (!e) return;
-    this.svc.updateStock(e.id, e.stock, e.stockMinimo, e.unidad).subscribe({
+    this.svc.updateStock(e.id, e.stock, e.stockMinimo, e.unidadId).subscribe({
       next: () => { this.load(); this.editando.set(null); },
       error: () => alert('Error al guardar')
     });

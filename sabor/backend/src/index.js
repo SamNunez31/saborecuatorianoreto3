@@ -17,6 +17,7 @@ const clientesRoutes = require('./routes/clientes.routes');
 const mesasRoutes        = require('./routes/mesas.routes');
 const ingredientesRoutes = require('./routes/ingredientes.routes');
 const proveedoresRoutes  = require('./routes/proveedores.routes');
+const unidadesRoutes     = require('./routes/unidades.routes');
 
 // Middleware centralizado de errores
 const errorHandler = require('./middleware/errorHandler');
@@ -54,6 +55,7 @@ app.use('/api/clientes', clientesRoutes);
 app.use('/api/mesas',        mesasRoutes);
 app.use('/api/ingredientes', ingredientesRoutes);
 app.use('/api/proveedores',  proveedoresRoutes);
+app.use('/api/unidades',     unidadesRoutes);
 
 app.get('/', (req, res) => res.json({
   status: 'ok',

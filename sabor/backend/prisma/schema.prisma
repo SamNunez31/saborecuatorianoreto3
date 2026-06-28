@@ -165,11 +165,20 @@ model Ingrediente {
   tipo                String?                @default("base") @db.VarChar(50)
   stock               Int                    @default(0)
   stockMinimo         Int                    @default(5) @map("stock_minimo")
-  unidad              String                 @default("unidad") @db.VarChar(20)
+  unidadId            Int?                   @map("unidad_id")
+  unidad              UnidadMedida?          @relation(fields: [unidadId], references: [id])
   platoIngredientes   PlatoIngrediente[]
   detalleIngredientes DetalleIngrediente[]
   proveedores         ProveedorIngrediente[]
   @@map("ingredientes")
+}
+
+model UnidadMedida {
+  id           Int           @id @default(autoincrement())
+  nombre       String        @db.VarChar(50)
+  abreviatura  String?       @db.VarChar(10)
+  ingredientes Ingrediente[]
+  @@map("unidades_medida")
 }
 
 model PlatoIngrediente {

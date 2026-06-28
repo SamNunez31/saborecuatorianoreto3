@@ -78,8 +78,8 @@ export class MesasService {
 export class IngredientesService {
   constructor(private http: HttpClient) {}
   getAll(): Observable<any[]>  { return this.http.get<any[]>(`${API}/ingredientes`); }
-  updateStock(id: number, stock: number, stockMinimo: number, unidad?: string): Observable<any> {
-    return this.http.put<any>(`${API}/ingredientes/${id}/stock`, { stock, stockMinimo, unidad });
+  updateStock(id: number, stock: number, stockMinimo: number, unidadId?: number): Observable<any> {
+    return this.http.put<any>(`${API}/ingredientes/${id}/stock`, { stock, stockMinimo, unidadId });
   }
   getAlertas(): Observable<any[]> { return this.http.get<any[]>(`${API}/ingredientes/alertas`); }
 }
@@ -92,6 +92,13 @@ export class ProveedoresService {
   create(data: any): Observable<any>                   { return this.http.post<any>(`${API}/proveedores`, data); }
   update(id: number, data: any): Observable<any>       { return this.http.put<any>(`${API}/proveedores/${id}`, data); }
   delete(id: number): Observable<any>                  { return this.http.delete<any>(`${API}/proveedores/${id}`); }
+}
+
+// ── UNIDADES ─────────────────────────────────────────────
+@Injectable({ providedIn: 'root' })
+export class UnidadesService {
+  constructor(private http: HttpClient) {}
+  getAll(): Observable<any[]> { return this.http.get<any[]>(`${API}/unidades`); }
 }
 
 // ── ADMIN ────────────────────────────────────────────────

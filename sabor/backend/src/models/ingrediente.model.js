@@ -4,21 +4,20 @@ const IngredienteModel = {
   getAll() {
     return prisma.ingrediente.findMany({
       include: {
-        proveedores: {
-          include: { proveedor: true }
-        }
+        unidad: true,
+        proveedores: { include: { proveedor: true } }
       },
       orderBy: { nombre: 'asc' }
     });
   },
 
-  updateStock(id, stock, stockMinimo, unidad) {
+  updateStock(id, stock, stockMinimo, unidadId) {
     return prisma.ingrediente.update({
       where: { id: parseInt(id) },
       data: {
         stock:       parseInt(stock),
         stockMinimo: stockMinimo != null ? parseInt(stockMinimo) : undefined,
-        unidad:      unidad || undefined
+        unidadId:    unidadId != null ? parseInt(unidadId) : undefined
       }
     });
   },
