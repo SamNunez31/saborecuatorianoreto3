@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MesasService } from '../../core/services/api.services';
 import { ToastService } from '../../core/services/toast.service';
 import { Mesa, EstadoMesa } from '../../core/models';
@@ -63,9 +64,12 @@ import { Mesa, EstadoMesa } from '../../core/models';
                       <div class="text-muted" style="font-size:12px">{{ m.descripcion }}</div>
                     }
                     @if (m.pedidos?.length) {
-                      <div class="mt-2 p-2 rounded-3" style="background:#fff3cd;font-size:12px">
+                      <div class="mt-2 p-2 rounded-3" style="background:#fff3cd;font-size:12px;cursor:pointer"
+                           (click)="verPedido(m.pedidos![0].id)"
+                           title="Ver pedido">
                         <i class="bi bi-receipt me-1"></i>
                         Pedido activo: {{ m.pedidos![0].factura?.numeroFactura || '#' + m.pedidos![0].id }}
+                        <i class="bi bi-arrow-right-circle ms-1"></i>
                       </div>
                     }
                   </div>
@@ -102,8 +106,9 @@ import { Mesa, EstadoMesa } from '../../core/models';
   `
 })
 export class MesasAdminComponent implements OnInit {
-  private svc   = inject(MesasService);
-  private toast = inject(ToastService);
+  private svc    = inject(MesasService);
+  private toast  = inject(ToastService);
+  private router = inject(Router);
 
   mesas   = signal<Mesa[]>([]);
   loading = signal(true);
@@ -126,6 +131,10 @@ export class MesasAdminComponent implements OnInit {
 
   colorEstado(estado: string): string {
     return this.estadosMeta.find(s => s.valor === estado)?.color ?? '#6b7280';
+  }
+
+  verPedido(pedidoId: number): void {
+    this.router.navigate(['/admin/pedidos'], { queryParams: { id: pedidoId } });
   }
 
   cambiarEstado(mesa: Mesa, estado: EstadoMesa): void {
