@@ -142,6 +142,8 @@ import { MapComponent } from '../../shared/map/map.component';
               <div class="rounded-3 px-3 py-2 mb-3" style="background:#f8f4ec;font-size:13px">
                 <div class="fw-semibold mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888">Cliente</div>
                 <div class="fw-semibold">{{ facturaModal()?.pedido?.cliente?.nombre }} {{ facturaModal()?.pedido?.cliente?.apellido }}</div>
+                <div class="text-muted" style="font-size:13px">{{ facturaModal()?.pedido?.cliente?.cedula || 'Consumidor Final' }}</div>
+                <div class="text-muted">{{ facturaModal()?.pedido?.cliente?.cedula || 'Consumidor Final' }}</div>
               </div>
               @for (d of facturaModal()?.pedido?.detalles; track d?.id) {
                 <div class="d-flex justify-content-between border-bottom py-1" style="font-size:14px">

@@ -210,7 +210,6 @@ import { RouterLink } from '@angular/router';
             <div class="card border-0 shadow-sm rounded-4 p-4">
               <div class="row g-3 mb-4">
                 <div class="col-12"><div class="text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.1em">Email</div><div class="fw-semibold mt-1">{{ auth.currentUser()?.email }}</div></div>
-                <div class="col-12"><div class="text-muted fw-semibold" style="font-size:11px;text-transform:uppercase;letter-spacing:.1em">Rol</div><div class="mt-1"><span class="badge bg-light text-dark">{{ auth.currentUser()?.rol }}</span></div></div>
               </div>
               <button class="btn btn-outline-danger" (click)="auth.logout()"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</button>
             </div>
