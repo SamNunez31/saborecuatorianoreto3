@@ -44,7 +44,19 @@ import { IngredientesService } from '../../core/services/api.services';
               <tr [class.table-danger]="ing.stock <= ing.stockMinimo">
                 <td class="fw-semibold">{{ ing.nombre }}</td>
                 <td><span class="badge bg-secondary">{{ ing.tipo || 'base' }}</span></td>
-                <td>{{ ing.unidad }}</td>
+                <td>
+                  @if (editando()?.id === ing.id) {
+                    <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="editando()!.unidad">
+                      <option value="unidad">unidad</option>
+                      <option value="kg">kg</option>
+                      <option value="litros">litros</option>
+                      <option value="gramos">gramos</option>
+                      <option value="ml">ml</option>
+                    </select>
+                  } @else {
+                    {{ ing.unidad }}
+                  }
+                </td>
                 <td>
                   @if (editando()?.id === ing.id) {
                     <input type="number" class="form-control form-control-sm" style="width:80px"
@@ -61,19 +73,6 @@ import { IngredientesService } from '../../core/services/api.services';
                            [(ngModel)]="editando()!.stockMinimo" min="0">
                   } @else {
                     {{ ing.stockMinimo }}
-                  }
-                </td>
-                <td>
-                  @if (editando()?.id === ing.id) {
-                    <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="editando()!.unidad">
-                      <option value="unidad">unidad</option>
-                      <option value="kg">kg</option>
-                      <option value="litros">litros</option>
-                      <option value="gramos">gramos</option>
-                      <option value="ml">ml</option>
-                    </select>
-                  } @else {
-                    {{ ing.unidad }}
                   }
                 </td>
                 <td>
