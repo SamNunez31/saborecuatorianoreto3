@@ -14,7 +14,9 @@ const pagosRoutes    = require('./routes/pagos.routes');
 const tarjetasRoutes = require('./routes/tarjetas.routes');
 const adminRoutes    = require('./routes/admin.routes');
 const clientesRoutes = require('./routes/clientes.routes');
-const mesasRoutes    = require('./routes/mesas.routes');
+const mesasRoutes        = require('./routes/mesas.routes');
+const ingredientesRoutes = require('./routes/ingredientes.routes');
+const proveedoresRoutes  = require('./routes/proveedores.routes');
 
 // Middleware centralizado de errores
 const errorHandler = require('./middleware/errorHandler');
@@ -49,7 +51,9 @@ app.use('/api/pagos',    pagosRoutes);
 app.use('/api/tarjetas', tarjetasRoutes);
 app.use('/api/admin',    adminRoutes);
 app.use('/api/clientes', clientesRoutes);
-app.use('/api/mesas',    mesasRoutes);
+app.use('/api/mesas',        mesasRoutes);
+app.use('/api/ingredientes', ingredientesRoutes);
+app.use('/api/proveedores',  proveedoresRoutes);
 
 app.get('/', (req, res) => res.json({
   status: 'ok',

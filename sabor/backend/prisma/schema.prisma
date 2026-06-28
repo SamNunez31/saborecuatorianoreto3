@@ -160,11 +160,14 @@ model Mesa {
 }
 
 model Ingrediente {
-  id                  Int                  @id @default(autoincrement())
-  nombre              String               @db.VarChar(100)
-  tipo                String?              @db.VarChar(50)
+  id                  Int                    @id @default(autoincrement())
+  nombre              String                 @db.VarChar(100)
+  tipo                String?                @default("base") @db.VarChar(50)
+  stock               Int                    @default(0)
+  stockMinimo         Int                    @default(5) @map("stock_minimo")
   platoIngredientes   PlatoIngrediente[]
   detalleIngredientes DetalleIngrediente[]
+  proveedores         ProveedorIngrediente[]
   @@map("ingredientes")
 }
 
@@ -176,6 +179,29 @@ model PlatoIngrediente {
   plato         Plato       @relation(fields: [platoId], references: [id], onDelete: Cascade)
   ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id])
   @@map("plato_ingredientes")
+}
+
+model Proveedor {
+  id           Int                    @id @default(autoincrement())
+  nombre       String                 @db.VarChar(150)
+  contacto     String?                @db.VarChar(100)
+  telefono     String?                @db.VarChar(20)
+  email        String?                @db.VarChar(150)
+  activo       Boolean                @default(true)
+  createdAt    DateTime               @default(now()) @map("created_at")
+  ingredientes ProveedorIngrediente[]
+  @@map("proveedores")
+}
+
+model ProveedorIngrediente {
+  id            Int         @id @default(autoincrement())
+  proveedorId   Int         @map("proveedor_id")
+  ingredienteId Int         @map("ingrediente_id")
+  esPrincipal   Boolean     @default(false) @map("es_principal")
+  proveedor     Proveedor   @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id], onDelete: Cascade)
+  @@unique([proveedorId, ingredienteId])
+  @@map("proveedor_ingredientes")
 }
 
 model DetalleIngrediente {
