@@ -1,12 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { inject } from '@angular/core';
 import { ProveedoresService } from '../../core/services/api.services';
 
 @Component({
   selector: 'app-proveedores',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
@@ -19,30 +20,46 @@ import { ProveedoresService } from '../../core/services/api.services';
     @if (mostrarForm()) {
       <div class="card border-0 shadow-sm mb-4 p-4">
         <h5 class="fw-semibold mb-3">{{ editando() ? 'Editar' : 'Nuevo' }} proveedor</h5>
-        <div class="row g-3">
+        <div class="row g-3" [formGroup]="form">
           <div class="col-md-6">
             <label class="form-label fw-semibold" style="font-size:13px">Nombre *</label>
-            <input type="text" class="form-control" [(ngModel)]="form.nombre" placeholder="Nombre del proveedor">
+            <input type="text" class="form-control" formControlName="nombre" placeholder="Distribuidora XYZ"
+                   [class.is-invalid]="f['nombre'].invalid && f['nombre'].touched">
+            @if (f['nombre'].invalid && f['nombre'].touched) {
+              <div class="invalid-feedback">Nombre requerido, mínimo 2 caracteres.</div>
+            }
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold" style="font-size:13px">RUC</label>
-            <input type="text" class="form-control" [(ngModel)]="form.ruc" placeholder="0999999999001" maxlength="13">
+            <label class="form-label fw-semibold" style="font-size:13px">RUC <span class="text-muted">(opcional)</span></label>
+            <input type="text" class="form-control" formControlName="ruc" placeholder="0999999999001" maxlength="13"
+                   [class.is-invalid]="f['ruc'].invalid && f['ruc'].touched">
+            @if (f['ruc'].invalid && f['ruc'].touched) {
+              <div class="invalid-feedback">RUC debe tener 10 o 13 dígitos numéricos.</div>
+            }
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold" style="font-size:13px">Contacto</label>
-            <input type="text" class="form-control" [(ngModel)]="form.contacto" placeholder="Nombre del contacto">
+            <input type="text" class="form-control" formControlName="contacto" placeholder="Nombre del contacto">
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold" style="font-size:13px">Teléfono</label>
-            <input type="tel" class="form-control" [(ngModel)]="form.telefono" placeholder="0999999999">
+            <input type="tel" class="form-control" formControlName="telefono" placeholder="0999999999" maxlength="10"
+                   [class.is-invalid]="f['telefono'].invalid && f['telefono'].touched">
+            @if (f['telefono'].invalid && f['telefono'].touched) {
+              <div class="invalid-feedback">Teléfono debe tener exactamente 10 dígitos.</div>
+            }
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold" style="font-size:13px">Email</label>
-            <input type="email" class="form-control" [(ngModel)]="form.email" placeholder="proveedor@email.com">
+            <input type="email" class="form-control" formControlName="email" placeholder="proveedor@empresa.com"
+                   [class.is-invalid]="f['email'].invalid && f['email'].touched">
+            @if (f['email'].invalid && f['email'].touched) {
+              <div class="invalid-feedback">Email inválido.</div>
+            }
           </div>
         </div>
         <div class="d-flex gap-2 mt-3">
-          <button class="btn btn-negro" (click)="guardar()" [disabled]="!form.nombre">Guardar</button>
+          <button class="btn btn-negro" (click)="guardar()" [disabled]="form.invalid">Guardar</button>
           <button class="btn btn-outline-secondary" (click)="cerrarFormulario()">Cancelar</button>
         </div>
       </div>
@@ -64,7 +81,7 @@ import { ProveedoresService } from '../../core/services/api.services';
           </thead>
           <tbody>
             @if (loading()) {
-              <tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr>
+              <tr><td colspan="7" class="text-center py-4 text-muted">Cargando...</td></tr>
             }
             @for (p of proveedores(); track p.id) {
               <tr>
@@ -90,13 +107,22 @@ import { ProveedoresService } from '../../core/services/api.services';
 })
 export class ProveedoresComponent implements OnInit {
   private svc = inject(ProveedoresService);
+  private fb  = inject(FormBuilder);
 
   proveedores  = signal<any[]>([]);
   loading      = signal(true);
   mostrarForm  = signal(false);
   editando     = signal<any>(null);
 
-  form: any = { nombre: '', ruc: '', contacto: '', telefono: '', email: '' };
+  form = this.fb.group({
+    nombre:   ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+    ruc:      ['', [Validators.pattern(/^[0-9]{10}$|^[0-9]{13}$/)]],
+    contacto: ['', [Validators.maxLength(100)]],
+    telefono: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+    email:    ['', [Validators.email]]
+  });
+
+  get f() { return this.form.controls; }
 
   ngOnInit() { this.load(); }
 
@@ -108,19 +134,29 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
-  abrirFormulario() { this.form = { nombre: '', ruc: '', contacto: '', telefono: '', email: '' }; this.editando.set(null); this.mostrarForm.set(true); }
-  cerrarFormulario() { this.mostrarForm.set(false); this.editando.set(null); }
+  abrirFormulario() {
+    this.form.reset();
+    this.editando.set(null);
+    this.mostrarForm.set(true);
+  }
+
+  cerrarFormulario() {
+    this.mostrarForm.set(false);
+    this.editando.set(null);
+    this.form.reset();
+  }
 
   editar(p: any) {
     this.editando.set(p);
-    this.form = { nombre: p.nombre, ruc: p.ruc, contacto: p.contacto, telefono: p.telefono, email: p.email };
+    this.form.patchValue({ nombre: p.nombre, ruc: p.ruc, contacto: p.contacto, telefono: p.telefono, email: p.email });
     this.mostrarForm.set(true);
   }
 
   guardar() {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const obs = this.editando()
-      ? this.svc.update(this.editando().id, this.form)
-      : this.svc.create(this.form);
+      ? this.svc.update(this.editando().id, this.form.value)
+      : this.svc.create(this.form.value);
     obs.subscribe({ next: () => { this.load(); this.cerrarFormulario(); }, error: () => alert('Error al guardar') });
   }
 
