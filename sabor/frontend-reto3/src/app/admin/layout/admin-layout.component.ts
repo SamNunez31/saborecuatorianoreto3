@@ -29,9 +29,8 @@ import { AuthService } from '../../core/services/auth.service';
         </nav>
         <div class="p-3 border-top" style="border-color:rgba(201,150,26,.15)!important">
           <div class="text-white-50 mb-2" style="font-size:13px">{{ auth.currentUser()?.nombre }}</div>
-          <button class="nav-link d-flex align-items-center gap-2 px-3 py-2 w-100 border-0 bg-transparent"
-                  style="color:rgba(255,100,100,.7)" (click)="auth.logout()">
-            <span aria-hidden="true">→</span> Cerrar sesión
+          <button class="sidebar-link w-100 text-start border-0 bg-transparent" style="color:#ff6b6b" (click)="logout()">
+            <span>🚪</span> Cerrar sesión
           </button>
         </div>
       </aside>
@@ -45,4 +44,5 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class AdminLayoutComponent {
   auth = inject(AuthService);
+  logout() { this.auth.logout(); }
 }
