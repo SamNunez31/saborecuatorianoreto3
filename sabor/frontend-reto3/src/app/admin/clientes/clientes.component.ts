@@ -42,5 +42,8 @@ export class ClientesAdminComponent implements OnInit {
   clientes = signal<Cliente[]>([]);
   loading  = signal(true);
   ngOnInit(): void { this.load(); }
-  load(): void { this.loading.set(true); this.svc.getClientes().subscribe({ next: c => { this.clientes.set(c); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  load(): void { this.loading.set(true); this.svc.getClientes().subscribe({ next: c => {
+  this.clientes.set(c.filter(x => x.usuario?.rol !== 'admin'));
+  this.loading.set(false);
+}, error: () => this.loading.set(false) }); }
 }

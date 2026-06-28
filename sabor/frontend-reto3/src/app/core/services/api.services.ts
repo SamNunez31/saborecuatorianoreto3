@@ -73,6 +73,27 @@ export class MesasService {
   updateEstado(id: number, estado: EstadoMesa): Observable<Mesa> { return this.http.put<Mesa>(`${API}/mesas/${id}/estado`, { estado }); }
 }
 
+// ── INGREDIENTES ─────────────────────────────────────────
+@Injectable({ providedIn: 'root' })
+export class IngredientesService {
+  constructor(private http: HttpClient) {}
+  getAll(): Observable<any[]>  { return this.http.get<any[]>(`${API}/ingredientes`); }
+  updateStock(id: number, stock: number, stockMinimo: number): Observable<any> {
+    return this.http.put<any>(`${API}/ingredientes/${id}/stock`, { stock, stockMinimo });
+  }
+  getAlertas(): Observable<any[]> { return this.http.get<any[]>(`${API}/ingredientes/alertas`); }
+}
+
+// ── PROVEEDORES ───────────────────────────────────────────
+@Injectable({ providedIn: 'root' })
+export class ProveedoresService {
+  constructor(private http: HttpClient) {}
+  getAll(): Observable<any[]>                          { return this.http.get<any[]>(`${API}/proveedores`); }
+  create(data: any): Observable<any>                   { return this.http.post<any>(`${API}/proveedores`, data); }
+  update(id: number, data: any): Observable<any>       { return this.http.put<any>(`${API}/proveedores/${id}`, data); }
+  delete(id: number): Observable<any>                  { return this.http.delete<any>(`${API}/proveedores/${id}`); }
+}
+
 // ── ADMIN ────────────────────────────────────────────────
 export interface Recomendacion { titulo: string; descripcion: string; }
 
