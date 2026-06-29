@@ -86,7 +86,8 @@ tarjRouter.post('/', authMiddleware, async (req, res, next) => {
 
 tarjRouter.delete('/:id', authMiddleware, async (req, res, next) => {
   try {
-    await prisma.tarjeta.delete({ where:{ id:+req.params.id, clienteId:req.user.clienteId } });
+    const count = await prisma.tarjeta.deleteMany({ where:{ id:+req.params.id, clienteId:req.user.clienteId } });
+    if (count.count === 0) return res.status(404).json({ error: 'Tarjeta no encontrada' });
     res.json({ message:'Tarjeta eliminada' });
   } catch(e) { next(e); }
 });
