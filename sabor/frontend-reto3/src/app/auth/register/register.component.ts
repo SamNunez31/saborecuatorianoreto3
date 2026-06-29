@@ -150,7 +150,8 @@ export class RegisterComponent {
   onSubmit(): void {
     if (this.registerForm.invalid) { this.registerForm.markAllAsTouched(); return; }
     this.loading = true;
-    const { passwordConfirm, ...rest } = this.registerForm.value;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordConfirm: _, ...rest } = this.registerForm.value;
     this.auth.register(rest as { nombre: string; apellido: string; email: string; password: string; telefono?: string; direccion?: string }).subscribe({
       next: (r) => {
         this.loading = false;
