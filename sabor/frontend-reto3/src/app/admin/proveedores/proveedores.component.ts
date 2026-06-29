@@ -91,7 +91,18 @@ import { ProveedoresService } from '../../core/services/api.services';
                 <td>{{ p.telefono || '—' }}</td>
                 <td>{{ p.email || '—' }}</td>
                 <td>
-                  <span class="badge bg-secondary">{{ p.ingredientes?.length || 0 }} ingredientes</span>
+                  @if (p.ingredientes?.length) {
+                    <div class="d-flex flex-wrap gap-1">
+                      @for (pi of p.ingredientes; track pi.id) {
+                        <span class="badge" style="background:#f0e8d4;color:#8a7340;font-weight:400;font-size:11px">
+                          {{ pi.ingrediente.nombre }}
+                          @if (pi.esPrincipal) { ⭐ }
+                        </span>
+                      }
+                    </div>
+                  } @else {
+                    <span class="text-muted" style="font-size:13px">Sin ingredientes</span>
+                  }
                 </td>
                 <td>
                   <button class="btn btn-sm btn-outline-primary me-1" (click)="editar(p)">Editar</button>
