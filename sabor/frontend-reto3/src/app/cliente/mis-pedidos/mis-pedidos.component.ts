@@ -64,25 +64,34 @@ import { MapComponent } from '../../shared/map/map.component';
               } @else {
                 <div class="px-4 py-3" style="border-bottom:1px solid #f0e8d8">
                   <div class="d-flex align-items-start">
-                    @for (paso of pasos; track paso.key; let i = $index, last = $last) {
+                    @for (paso of getPasos(p.tipoEntrega); track paso.key; let i = $index, last = $last) {
                       <div class="d-flex flex-column align-items-center" style="flex:0 0 auto;min-width:56px">
                         <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;transition:.3s"
-                             [style.background]="pasoBg(i, pasoActual(p.estado))"
-                             [style.color]="pasoTextColor(i, pasoActual(p.estado))">
-                          @if (i < pasoActual(p.estado)) { <i class="bi bi-check-lg"></i> }
+                             [style.background]="pasoBg(i, pasoActual(p.estado, p.tipoEntrega))"
+                             [style.color]="pasoTextColor(i, pasoActual(p.estado, p.tipoEntrega))">
+                          @if (i < pasoActual(p.estado, p.tipoEntrega)) { <i class="bi bi-check-lg"></i> }
                           @else { {{ i + 1 }} }
                         </div>
                         <div class="text-center mt-1" style="font-size:10px;line-height:1.3;max-width:56px"
-                             [style.color]="i <= pasoActual(p.estado) ? 'var(--se-negro)' : 'var(--se-gris)'">
+                             [style.color]="i <= pasoActual(p.estado, p.tipoEntrega) ? 'var(--se-negro)' : 'var(--se-gris)'">
                           {{ paso.label }}
                         </div>
                       </div>
                       @if (!last) {
                         <div style="flex:1;height:2px;margin-top:14px;transition:.3s;min-width:8px"
-                             [style.background]="lineaBg(i, pasoActual(p.estado))"></div>
+                             [style.background]="lineaBg(i, pasoActual(p.estado, p.tipoEntrega))"></div>
                       }
                     }
                   </div>
+                </div>
+              }
+
+              <!-- HORA ESTIMADA -->
+              @if (p.estado !== 'cancelado' && p.estado !== 'entregado') {
+                <div class="px-4 py-2" style="font-size:13px;color:var(--se-gris)">
+                  <i class="bi bi-clock me-1"></i>
+                  Hora estimada de {{ p.tipoEntrega === 'domicilio' ? 'entrega' : 'retiro' }}:
+                  <strong>{{ horaEstimada(p) }}</strong>
                 </div>
               }
 
@@ -221,12 +230,30 @@ export class MisPedidosComponent implements OnInit {
   facturaModal     = signal<Factura | null>(null);
   pedidoACancelar  = signal<Pedido | null>(null);
 
-  readonly pasos = [
-    { key: 'pendiente',      label: 'Pendiente' },
-    { key: 'en_preparacion', label: 'En preparación' },
-    { key: 'listo',          label: 'En camino' },
-    { key: 'entregado',      label: 'Entregado' },
-  ];
+  getPasos(tipoEntrega: string) {
+    if (tipoEntrega === 'domicilio') {
+      return [
+        { key: 'pendiente',      label: 'Pendiente' },
+        { key: 'en_preparacion', label: 'En preparación' },
+        { key: 'listo',          label: 'En camino' },
+        { key: 'entregado',      label: 'Entregado' },
+      ];
+    } else {
+      return [
+        { key: 'pendiente',      label: 'Pendiente' },
+        { key: 'en_preparacion', label: 'En preparación' },
+        { key: 'listo',          label: 'Listo' },
+        { key: 'entregado',      label: 'Entregado' },
+      ];
+    }
+  }
+
+  horaEstimada(p: any): string {
+    const fecha = new Date(p.fechaPedido);
+    const minutos = p.tipoEntrega === 'domicilio' ? 45 : 20;
+    fecha.setMinutes(fecha.getMinutes() + minutos);
+    return fecha.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+  }
 
   ngOnInit(): void {
     this.svc.getMisPedidos().subscribe({
@@ -260,8 +287,8 @@ export class MisPedidosComponent implements OnInit {
     return m[e] || e;
   }
 
-  pasoActual(estado: string): number {
-    return this.pasos.findIndex(p => p.key === estado);
+  pasoActual(estado: string, tipoEntrega: string): number {
+    return this.getPasos(tipoEntrega).findIndex(p => p.key === estado);
   }
 
   pasoBg(i: number, actual: number): string {
