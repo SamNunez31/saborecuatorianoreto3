@@ -272,7 +272,10 @@ export class MisPedidosComponent implements OnInit {
     return fecha.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
   }
 
-  ngOnInit(): void {
+  ngOnInit(): void { this.load(); }
+
+  load(): void {
+    this.loading.set(true);
     this.svc.getMisPedidos().subscribe({
       next: p => { this.pedidos.set(p); this.loading.set(false); },
       error: () => this.loading.set(false)
@@ -292,10 +295,10 @@ export class MisPedidosComponent implements OnInit {
     const p = this.pedidoACancelar();
     if (!p) return;
     this.svc.updateEstado(p.id, 'cancelado').subscribe({
-      next: (updated) => {
+      next: () => {
         this.toast.success('Pedido cancelado');
-        this.pedidos.update(list => list.map(x => x.id === p.id ? { ...x, estado: updated.estado } : x));
         this.cancelarCancelacion();
+        this.load();
       },
       error: (e) => { this.toast.error(e.error?.error || 'No se pudo cancelar el pedido'); this.cancelarCancelacion(); }
     });
