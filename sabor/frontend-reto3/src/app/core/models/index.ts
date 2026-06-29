@@ -9,7 +9,7 @@ export interface CategoriaPlato  { id: number; nombre: string; }
 export interface Ingrediente     { id: number; nombre: string; tipo?: string; }
 export interface PlatoIngrediente{ id: number; platoId: number; ingredienteId: number; esRemovible: boolean; ingrediente: Ingrediente; }
 export interface Plato           { id: number; nombre: string; descripcion?: string; precio: number; disponible: boolean; imagenUrl?: string; categoriaId: number; categoria?: CategoriaPlato; platoIngredientes?: PlatoIngrediente[]; createdAt?: string; }
-export interface CreatePlatoDto  { nombre: string; descripcion?: string; precio: number; categoriaId: number; imagenUrl?: string; }
+export interface CreatePlatoDto  { nombre: string; descripcion?: string; precio: number; categoriaId: number; imagenUrl?: string; ingredientes?: { ingredienteId: number; esRemovible: boolean }[]; }
 
 // ── MESAS ────────────────────────────────────────────────
 export type EstadoMesa = 'disponible'|'ocupada'|'reservada';

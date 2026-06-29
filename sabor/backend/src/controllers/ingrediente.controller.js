@@ -17,4 +17,9 @@ const getAlertas = async (req, res, next) => {
   catch (e) { next(e); }
 };
 
-module.exports = { getAll, updateStock, getAlertas };
+const create = async (req, res, next) => {
+  try { res.status(201).json(await IngredienteModel.create(req.body)); }
+  catch (e) { next(e); }
+};
+
+module.exports = { getAll, updateStock, getAlertas, create };

@@ -17,7 +17,7 @@ function passwordsMatch(c: AbstractControl): ValidationErrors | null {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <div class="min-vh-100 d-flex align-items-center justify-content-center py-5" style="background:var(--se-crema);padding-top:80px!important">
+    <div class="min-vh-100 d-flex align-items-center justify-content-center py-5" style="background:var(--bg-color);padding-top:80px!important">
       <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5" style="width:100%;max-width:520px">
         <div style="font-family:var(--se-serif);font-style:italic;color:var(--se-dorado);margin-bottom:6px">Sabor Ecuatoriano</div>
         <h2 class="fw-bold mb-1" style="font-family:var(--se-serif)">Crea tu cuenta</h2>

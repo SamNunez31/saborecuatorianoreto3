@@ -1,17 +1,18 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PedidosService, FacturasService } from '../../core/services/api.services';
 import { ToastService } from '../../core/services/toast.service';
 import { Pedido, Factura } from '../../core/models';
 import { MapComponent } from '../../shared/map/map.component';
+import { SocketService } from '../../core/services/socket.service';
 
 @Component({
   selector: 'app-mis-pedidos',
   standalone: true,
   imports: [CommonModule, RouterLink, MapComponent],
   template: `
-    <main style="padding-top:80px;min-height:100vh;background:var(--se-crema)">
+    <main style="padding-top:80px;min-height:100vh;background:var(--bg-color)">
       <div class="container py-5" style="max-width:800px">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div><span class="eyebrow d-block mb-1">Tu historial</span><h1 style="font-family:var(--se-serif);font-size:1.8rem">Mis pedidos</h1></div>
@@ -35,7 +36,7 @@ import { MapComponent } from '../../shared/map/map.component';
                      [attr.aria-label]="'Pedido ' + (p.factura?.numeroFactura || '#' + p.id)">
 
               <!-- HEADER -->
-              <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center py-3 px-4">
+              <div class="card-header border-0 d-flex justify-content-between align-items-center py-3 px-4" style="background:var(--card-bg)">
                 <div>
                   <span class="fw-bold">{{ p.factura?.numeroFactura || '#' + p.id }}</span>
                   <span class="text-muted ms-2" style="font-size:13px">{{ p.fechaPedido | date:'dd MMM yyyy HH:mm' }}</span>
@@ -73,7 +74,7 @@ import { MapComponent } from '../../shared/map/map.component';
                           @else { {{ i + 1 }} }
                         </div>
                         <div class="text-center mt-1" style="font-size:10px;line-height:1.3;max-width:56px"
-                             [style.color]="i <= pasoActual(p.estado, p.tipoEntrega) ? 'var(--se-negro)' : 'var(--se-gris)'">
+                             [style.color]="i <= pasoActual(p.estado, p.tipoEntrega) ? 'var(--text-color)' : 'var(--se-gris)'">
                           {{ paso.label }}
                         </div>
                       </div>
@@ -83,6 +84,12 @@ import { MapComponent } from '../../shared/map/map.component';
                       }
                     }
                   </div>
+                  @if (p.tipoEntrega === 'retiro' && p.estado === 'listo') {
+                    <div class="mt-2 d-flex align-items-center gap-2" style="font-size:12px;color:var(--se-gris)">
+                      <span>✅</span>
+                      <strong style="color:#16a34a">¡Tu pedido está listo para retiro!</strong>
+                    </div>
+                  }
                 </div>
               }
 
@@ -107,7 +114,7 @@ import { MapComponent } from '../../shared/map/map.component';
 
               <!-- TOTALES -->
               @if (p.factura) {
-                <div class="card-footer bg-light border-0 d-flex justify-content-between px-4 py-3" style="font-size:14px">
+                <div class="card-footer border-0 d-flex justify-content-between px-4 py-3" style="font-size:14px;background:var(--card-bg)">
                   <div class="text-muted">
                     <span>Subtotal: {{ p.factura.subtotal | currency:'USD':'symbol':'1.2-2' }}</span>
                     <span class="ms-3">IVA: {{ p.factura.iva | currency:'USD':'symbol':'1.2-2' }}</span>
@@ -119,7 +126,7 @@ import { MapComponent } from '../../shared/map/map.component';
               <!-- MAPA (solo domicilio) -->
               @if (p.tipoEntrega === 'domicilio') {
                 <div>
-                  <div class="px-4 pt-2 pb-1 bg-white" style="font-size:12px;color:var(--se-gris)">
+                  <div class="px-4 pt-2 pb-1" style="font-size:12px;color:var(--se-gris);background:var(--card-bg)">
                     <i class="bi bi-geo-alt-fill me-1" style="color:var(--se-dorado)"></i>
                     {{ p.cliente?.direccion || 'Quito, Ecuador' }}
                   </div>
@@ -148,7 +155,7 @@ import { MapComponent } from '../../shared/map/map.component';
                 <div><strong style="font-family:var(--se-serif)">Sabor Ecuatoriano</strong><div class="text-muted" style="font-size:12px">RUC 1234567890001</div></div>
                 <div class="text-end"><div class="fw-bold">{{ facturaModal()?.numeroFactura }}</div><div class="text-muted" style="font-size:12px">{{ facturaModal()?.fechaEmision | date:'dd/MM/yyyy' }}</div></div>
               </div>
-              <div class="rounded-3 px-3 py-2 mb-3" style="background:#f8f4ec;font-size:13px">
+              <div class="rounded-3 px-3 py-2 mb-3" style="background:var(--bg-color);font-size:13px; border:1px solid var(--border-color)">
                 <div class="fw-semibold mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888">Cliente</div>
                 <div class="fw-semibold">{{ facturaModal()?.pedido?.cliente?.nombre }} {{ facturaModal()?.pedido?.cliente?.apellido }}</div>
                 <div class="text-muted" style="font-size:13px">{{ facturaModal()?.pedido?.cliente?.cedula || 'Consumidor Final' }}</div>
@@ -164,7 +171,7 @@ import { MapComponent } from '../../shared/map/map.component';
                 <div class="d-flex justify-content-between text-muted mb-2" style="font-size:14px"><span>IVA 15%</span><span>{{ facturaModal()?.iva | currency:'USD':'symbol':'1.2-2' }}</span></div>
                 <div class="d-flex justify-content-between fw-bold" style="font-size:1.1rem"><span>TOTAL</span><span>{{ facturaModal()?.total | currency:'USD':'symbol':'1.2-2' }}</span></div>
               </div>
-              <div class="rounded-3 px-3 py-2 mt-3" style="background:#f8f4ec;font-size:13px">
+              <div class="rounded-3 px-3 py-2 mt-3" style="background:var(--bg-color);font-size:13px; border:1px solid var(--border-color)">
                 <div class="fw-semibold mb-2" style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888">Detalles de entrega y pago</div>
                 <div class="d-flex justify-content-between mb-1">
                   <span class="text-muted">Tipo de entrega</span>
@@ -224,11 +231,22 @@ export class MisPedidosComponent implements OnInit {
   private svc      = inject(PedidosService);
   private factSvc  = inject(FacturasService);
   private toast    = inject(ToastService);
+  private socketSvc = inject(SocketService);
 
   pedidos          = signal<Pedido[]>([]);
   loading          = signal(true);
   facturaModal     = signal<Factura | null>(null);
   pedidoACancelar  = signal<Pedido | null>(null);
+
+  constructor() {
+    effect(() => {
+      const pUpdate = this.socketSvc.pedidoActualizado();
+      if (pUpdate) {
+        // Actualizar el estado si el pedido existe en la lista
+        this.pedidos.update(list => list.map(p => p.id === pUpdate.id ? { ...p, estado: pUpdate.estado } : p));
+      }
+    }, { allowSignalWrites: true });
+  }
 
   getPasos(tipoEntrega: string) {
     if (tipoEntrega === 'domicilio') {
@@ -242,8 +260,7 @@ export class MisPedidosComponent implements OnInit {
       return [
         { key: 'pendiente',      label: 'Pendiente' },
         { key: 'en_preparacion', label: 'En preparación' },
-        { key: 'listo',          label: 'Listo' },
-        { key: 'entregado',      label: 'Entregado' },
+        { key: 'listo',          label: 'Listo para retiro' },
       ];
     }
   }
@@ -261,6 +278,8 @@ export class MisPedidosComponent implements OnInit {
       error: () => this.loading.set(false)
     });
   }
+
+
 
   verFactura(id: number): void {
     this.factSvc.getById(id).subscribe({ next: f => this.facturaModal.set(f), error: () => this.toast.error('No se pudo cargar la factura') });

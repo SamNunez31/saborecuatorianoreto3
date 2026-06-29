@@ -26,6 +26,17 @@ const IngredienteModel = {
     return prisma.$queryRaw`
       SELECT * FROM ingredientes WHERE stock <= stock_minimo
     `;
+  },
+
+  create(data) {
+    return prisma.ingrediente.create({
+      data: {
+        nombre: data.nombre,
+        tipo: data.tipo || 'base',
+        stock: 0,
+        stockMinimo: 5
+      }
+    });
   }
 };
 

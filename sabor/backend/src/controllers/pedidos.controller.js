@@ -19,6 +19,9 @@ const create = async (req, res, next) => {
     const numeroFactura = `FAC-${String(count + 1).padStart(4, '0')}`;
     const factura       = await FacturaModel.create(pedido.id, { numeroFactura, subtotal, iva, total });
 
+    const io = req.app.get('io');
+    if (io) io.emit('nuevo-pedido', pedido);
+
     res.status(201).json({ pedido, factura });
   } catch (e) { next(e); }
 };
@@ -62,6 +65,10 @@ const updateEstado = async (req, res, next) => {
     if (['entregado', 'cancelado'].includes(estado) && pedidoActualizado.mesaId) {
       await prisma.mesa.update({ where: { id: pedidoActualizado.mesaId }, data: { estado: 'disponible' } });
     }
+    
+    const io = req.app.get('io');
+    if (io) io.emit('pedido-actualizado', pedidoActualizado);
+
     res.json(pedidoActualizado);
   } catch (e) { next(e); }
 };

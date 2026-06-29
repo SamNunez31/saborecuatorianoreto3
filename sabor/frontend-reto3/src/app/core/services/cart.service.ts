@@ -5,6 +5,7 @@ import { CartItem } from '../models';
 export class CartService {
   private readonly KEY = 'se_carrito';
   items = signal<CartItem[]>(this._load());
+  isAnimating = signal(false);
 
   count    = computed(() => this.items().reduce((s, i) => s + i.cantidad, 0));
   subtotal = computed(() => this.items().reduce((s, i) => s + i.precio * i.cantidad, 0));
@@ -34,6 +35,10 @@ export class CartService {
       });
     }
     this._save(items);
+    
+    // Disparar animación
+    this.isAnimating.set(true);
+    setTimeout(() => this.isAnimating.set(false), 500);
   }
 
   inc(idOrKey: number | string): void {

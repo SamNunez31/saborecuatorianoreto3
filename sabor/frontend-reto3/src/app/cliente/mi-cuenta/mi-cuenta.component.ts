@@ -15,7 +15,7 @@ import { RouterLink } from '@angular/router';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <main style="padding-top:80px;min-height:100vh;background:var(--se-crema)">
+    <main style="padding-top:80px;min-height:100vh;background:var(--bg-color)">
       <div class="container py-5" style="max-width:760px">
         <a routerLink="/" class="text-decoration-none d-inline-flex align-items-center mb-3" style="color:var(--se-dorado);font-weight:600">
           <i class="bi bi-arrow-left me-2"></i>Volver a la tienda

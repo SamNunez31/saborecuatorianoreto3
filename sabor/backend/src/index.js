@@ -4,6 +4,8 @@ const cors     = require('cors');
 const morgan   = require('morgan');
 const path     = require('path');
 const fs       = require('fs');
+const http     = require('http');
+const { Server } = require('socket.io');
 
 // Rutas
 const authRoutes     = require('./routes/auth.routes');
@@ -72,9 +74,25 @@ if (!fs.existsSync(path.join(__dirname, '../logs'))) {
   fs.mkdirSync(path.join(__dirname, '../logs'));
 }
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    credentials: true
+  }
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('🔗 Nuevo cliente conectado WS:', socket.id);
+  socket.on('disconnect', () => console.log('❌ Cliente desconectado WS:', socket.id));
+});
+
+server.listen(PORT, () => {
   console.log(`🍽  Sabor Ecuatoriano API corriendo en http://localhost:${PORT}`);
   console.log(`📋  Ambiente: ${process.env.NODE_ENV || 'development'}`);
 });
 
-module.exports = app;
+module.exports = { app, server, io };

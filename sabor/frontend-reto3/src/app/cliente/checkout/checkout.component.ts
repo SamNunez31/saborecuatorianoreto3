@@ -12,7 +12,7 @@ import { Tarjeta, Mesa } from '../../core/models';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <main style="padding-top:80px;min-height:100vh;background:var(--se-crema)" id="main-content">
+    <main style="padding-top:80px;min-height:100vh;background:var(--bg-color)" id="main-content">
       <div class="container py-5">
         <div class="mb-3">
           <button class="btn btn-outline-secondary btn-sm" (click)="router.navigate(['/menu'])">
@@ -224,7 +224,7 @@ export class CheckoutComponent implements OnInit {
       cantidad: i.cantidad,
       ingredientesRemovidos: i.ingredientesRemovidos || []
     }));
-    const mesaId = fv.tipoEntrega === 'retiro' && fv.mesaId ? fv.mesaId : null;
+    const mesaId = fv.tipoEntrega === 'retiro' && fv.mesaId ? fv.mesaId : undefined;
     this.pedidos.create({ items, tipoEntrega: fv.tipoEntrega as 'retiro'|'domicilio', observaciones: fv.observaciones || '', mesaId }).subscribe({
       next: ({ factura }) => {
         this.pagos.create({ facturaId: factura.id, formaPagoId: fv.formaPagoId!, tarjetaId: fv.tarjetaId ?? undefined, monto: factura.total }).subscribe({

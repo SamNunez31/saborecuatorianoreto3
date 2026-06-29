@@ -13,7 +13,7 @@ router.post('/', authMiddleware,
     body('items.*.ingredientesRemovidos').optional().isArray(),
     body('items.*.nota').optional().isString().trim(),
     body('tipoEntrega').isIn(['retiro', 'domicilio']).withMessage('Tipo de entrega inválido'),
-    body('mesaId').optional().isInt({ min: 1 }).withMessage('Mesa inválida'),
+    body('mesaId').optional({ values: 'null' }).isInt({ min: 1 }).withMessage('Mesa inválida'),
   ],
   validate,
   ctrl.create

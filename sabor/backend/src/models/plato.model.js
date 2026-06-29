@@ -27,29 +27,50 @@ const PlatoModel = {
   },
 
   create(data) {
-    return prisma.plato.create({
-      data: {
-        categoriaId: +data.categoriaId,
-        nombre:      data.nombre,
-        descripcion: data.descripcion,
-        precio:      +data.precio,
-        imagenUrl:   data.imagenUrl,
-        disponible:  true
-      }
-    });
+    const payload = {
+      categoriaId: +data.categoriaId,
+      nombre:      data.nombre,
+      descripcion: data.descripcion,
+      precio:      +data.precio,
+      imagenUrl:   data.imagenUrl,
+      disponible:  true
+    };
+
+    if (data.ingredientes && data.ingredientes.length > 0) {
+      payload.platoIngredientes = {
+        create: data.ingredientes.map(i => ({
+          ingredienteId: +i.ingredienteId,
+          esRemovible: i.esRemovible !== undefined ? i.esRemovible : true
+        }))
+      };
+    }
+
+    return prisma.plato.create({ data: payload });
   },
 
   update(id, data) {
+    const payload = {
+      nombre:      data.nombre,
+      descripcion: data.descripcion,
+      precio:      data.precio != null ? +data.precio : undefined,
+      disponible:  data.disponible,
+      categoriaId: data.categoriaId ? +data.categoriaId : undefined,
+      imagenUrl:   data.imagenUrl
+    };
+
+    if (data.ingredientes) {
+      payload.platoIngredientes = {
+        deleteMany: {},
+        create: data.ingredientes.map(i => ({
+          ingredienteId: +i.ingredienteId,
+          esRemovible: i.esRemovible !== undefined ? i.esRemovible : true
+        }))
+      };
+    }
+
     return prisma.plato.update({
       where: { id: parseInt(id) },
-      data: {
-        nombre:      data.nombre,
-        descripcion: data.descripcion,
-        precio:      data.precio != null ? +data.precio : undefined,
-        disponible:  data.disponible,
-        categoriaId: data.categoriaId ? +data.categoriaId : undefined,
-        imagenUrl:   data.imagenUrl
-      }
+      data: payload
     });
   },
 

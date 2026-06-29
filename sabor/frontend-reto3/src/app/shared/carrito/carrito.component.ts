@@ -58,7 +58,7 @@ import { ToastService } from '../../core/services/toast.service';
         </div>
 
         <!-- Footer -->
-        <div class="border-top p-3 bg-white">
+        <div class="border-top p-3" style="background:var(--card-bg)">
           <div class="d-flex justify-content-between mb-1" style="font-size:14px">
             <span>Subtotal</span><span>{{ cart.subtotal() | currency:'USD':'symbol':'1.2-2' }}</span>
           </div>

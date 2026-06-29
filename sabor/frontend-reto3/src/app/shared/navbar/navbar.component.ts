@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { CarritoComponent } from '../carrito/carrito.component';
 
 @Component({
@@ -32,9 +33,19 @@ import { CarritoComponent } from '../carrito/carrito.component';
             }
           </ul>
           <div class="d-flex align-items-center gap-3">
+            <!-- Theme Toggle -->
+            <button class="btn btn-link p-0 text-white" (click)="theme.toggle()" aria-label="Cambiar tema">
+              @if (theme.isDarkMode()) {
+                <i class="bi bi-sun-fill" style="font-size:20px; color:var(--se-dorado)"></i>
+              } @else {
+                <i class="bi bi-moon-stars-fill" style="font-size:20px"></i>
+              }
+            </button>
+            
             <!-- Botón carrito -->
             <button class="btn btn-link p-0 position-relative text-white" (click)="offcanvasOpen=true"
-                    [attr.aria-label]="'Abrir carrito, ' + cart.count() + ' artículos'">
+                    [attr.aria-label]="'Abrir carrito, ' + cart.count() + ' artículos'"
+                    [class.anim-cart-bounce]="cart.isAnimating()">
               <i class="bi bi-cart3" style="font-size:22px"></i>
               @if (cart.count() > 0) {
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
@@ -83,5 +94,6 @@ import { CarritoComponent } from '../carrito/carrito.component';
 export class NavbarComponent {
   auth = inject(AuthService);
   cart = inject(CartService);
+  theme = inject(ThemeService);
   offcanvasOpen = false;
 }

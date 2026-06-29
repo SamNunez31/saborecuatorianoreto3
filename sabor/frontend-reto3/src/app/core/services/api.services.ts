@@ -82,6 +82,7 @@ export class IngredientesService {
     return this.http.put<any>(`${API}/ingredientes/${id}/stock`, { stock, stockMinimo, unidadId });
   }
   getAlertas(): Observable<any[]> { return this.http.get<any[]>(`${API}/ingredientes/alertas`); }
+  create(data: { nombre: string; tipo?: string }): Observable<any> { return this.http.post<any>(`${API}/ingredientes`, data); }
 }
 
 // ── PROVEEDORES ───────────────────────────────────────────

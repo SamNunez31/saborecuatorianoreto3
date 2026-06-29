@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { PlatosService } from '../../core/services/api.services';
+import { PlatosService, IngredientesService } from '../../core/services/api.services';
 import { ToastService } from '../../core/services/toast.service';
-import { Plato, CategoriaPlato, CreatePlatoDto } from '../../core/models';
+import { Plato, CategoriaPlato, CreatePlatoDto, Ingrediente } from '../../core/models';
 
 const SUPABASE_KEY    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJremNybHN0cG5yYXBxbWRudmRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NzUwNDMsImV4cCI6MjA5NjQ1MTA0M30.uI0qF8dhPjcNmu2wQI_oIbH_4rXRnQJ6rylQgmEQdCQ';
 const SUPABASE_UPLOAD = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/object/platos/';
@@ -137,6 +137,42 @@ const SUPABASE_PUBLIC = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/obj
                   }
                   <div class="form-text" style="font-size:11px">JPG, PNG o WebP. Máximo 1 MB.</div>
                 </div>
+                <!-- Ingredientes -->
+                <div class="mb-4">
+                  <label class="form-label fw-semibold" style="font-size:13px">Ingredientes del plato</label>
+                  <div class="border rounded-3 p-3" style="max-height:200px;overflow-y:auto;background:#fafafa">
+                    @for (ing of allIngredientes(); track ing.id) {
+                      <div class="d-flex align-items-center py-1">
+                        <div class="form-check me-3 mb-0">
+                          <input class="form-check-input" type="checkbox" [id]="'ing_'+ing.id"
+                                 [checked]="hasIngrediente(ing.id)" (change)="toggleIngrediente(ing.id, $event)">
+                          <label class="form-check-label" [for]="'ing_'+ing.id" style="font-size:13px;cursor:pointer">{{ ing.nombre }}</label>
+                        </div>
+                        @if (hasIngrediente(ing.id)) {
+                          <div class="form-check ms-auto mb-0" style="min-width:120px">
+                            <input class="form-check-input" type="checkbox" [id]="'rem_'+ing.id"
+                                   [checked]="isRemovible(ing.id)" (change)="toggleRemovible(ing.id, $event)">
+                            <label class="form-check-label text-muted" [for]="'rem_'+ing.id" style="font-size:12px;cursor:pointer">Removible</label>
+                          </div>
+                        }
+                      </div>
+                    }
+                    @if (allIngredientes().length === 0) {
+                      <div class="text-muted text-center" style="font-size:13px">No hay ingredientes registrados.</div>
+                    }
+                  </div>
+                  <!-- Añadir nuevo ingrediente -->
+                  <div class="mt-2 d-flex gap-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="Añadir ingrediente..." 
+                           [value]="nuevoIngrediente()" (input)="nuevoIngrediente.set($any($event.target).value)"
+                           (keydown.enter)="$event.preventDefault(); agregarIngrediente()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center" style="white-space:nowrap"
+                            (click)="agregarIngrediente()" [disabled]="!nuevoIngrediente().trim() || creandoIngrediente()">
+                      @if (creandoIngrediente()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                      + Añadir
+                    </button>
+                  </div>
+                </div>
                 <div class="d-flex gap-2 mt-2">
                   <button type="button" class="btn btn-outline-secondary flex-fill" (click)="cerrarModal()">← Volver</button>
                   <button type="submit" class="btn btn-dorado flex-fill fw-semibold" [disabled]="saving() || uploading()">
@@ -181,8 +217,9 @@ const SUPABASE_PUBLIC = 'https://bkzcrlstpnrapqmdnvdn.supabase.co/storage/v1/obj
 })
 export class PlatosAdminComponent implements OnInit {
   private fb    = inject(FormBuilder);
-  private svc   = inject(PlatosService);
-  private toast = inject(ToastService);
+  private svc    = inject(PlatosService);
+  private ingSvc = inject(IngredientesService);
+  private toast  = inject(ToastService);
 
   platos          = signal<Plato[]>([]);
   categorias      = signal<CategoriaPlato[]>([]);
@@ -194,6 +231,10 @@ export class PlatosAdminComponent implements OnInit {
   uploadError     = signal('');
   busqueda        = signal('');
   platoAEliminar  = signal<Plato | null>(null);
+  allIngredientes = signal<Ingrediente[]>([]);
+  ingredientesSeleccionados = signal<{ingredienteId: number, esRemovible: boolean}[]>([]);
+  nuevoIngrediente = signal('');
+  creandoIngrediente = signal(false);
 
   platosFiltrados = computed(() => {
     const q = this.busqueda().toLowerCase().trim();
@@ -211,6 +252,7 @@ export class PlatosAdminComponent implements OnInit {
 
   ngOnInit(): void {
     this.svc.getCategorias().subscribe(c => this.categorias.set(c));
+    this.ingSvc.getAll().subscribe(i => this.allIngredientes.set(i));
     this.load();
   }
 
@@ -219,12 +261,13 @@ export class PlatosAdminComponent implements OnInit {
     this.svc.getAll().subscribe({ next: p => { this.platos.set(p); this.loading.set(false); }, error: () => this.loading.set(false) });
   }
 
-  abrirModal(): void { this.editando.set(null); this.uploadError.set(''); this.platoForm.reset(); this.modalOpen.set(true); }
+  abrirModal(): void { this.editando.set(null); this.uploadError.set(''); this.platoForm.reset(); this.ingredientesSeleccionados.set([]); this.modalOpen.set(true); }
 
   editar(p: Plato): void {
     this.editando.set(p);
     this.uploadError.set('');
     this.platoForm.patchValue({ categoriaId: p.categoriaId, nombre: p.nombre, descripcion: p.descripcion || '', precio: p.precio, imagenUrl: p.imagenUrl || '' });
+    this.ingredientesSeleccionados.set(p.platoIngredientes?.map(pi => ({ ingredienteId: pi.ingredienteId, esRemovible: pi.esRemovible })) || []);
     this.modalOpen.set(true);
   }
 
@@ -256,7 +299,14 @@ export class PlatosAdminComponent implements OnInit {
     if (this.platoForm.invalid) { this.platoForm.markAllAsTouched(); return; }
     this.saving.set(true);
     const v = this.platoForm.value;
-    const data: CreatePlatoDto = { categoriaId: +v.categoriaId!, nombre: v.nombre!, descripcion: v.descripcion || undefined, precio: +v.precio!, imagenUrl: v.imagenUrl || undefined };
+    const data: CreatePlatoDto = { 
+      categoriaId: +v.categoriaId!, 
+      nombre: v.nombre!, 
+      descripcion: v.descripcion || undefined, 
+      precio: +v.precio!, 
+      imagenUrl: v.imagenUrl || undefined,
+      ingredientes: this.ingredientesSeleccionados()
+    };
     const req = this.editando()
       ? this.svc.update(this.editando()!.id, data)
       : this.svc.create(data);
@@ -279,6 +329,41 @@ export class PlatosAdminComponent implements OnInit {
         this.cancelarEliminar();
       },
       error: () => { this.toast.error('Error al eliminar el plato'); this.cancelarEliminar(); }
+    });
+  }
+
+  hasIngrediente(id: number): boolean { return this.ingredientesSeleccionados().some(x => x.ingredienteId === id); }
+  isRemovible(id: number): boolean { return this.ingredientesSeleccionados().find(x => x.ingredienteId === id)?.esRemovible ?? true; }
+  
+  toggleIngrediente(id: number, e: Event): void {
+    const checked = (e.target as HTMLInputElement).checked;
+    if (checked) {
+      this.ingredientesSeleccionados.update(list => [...list, { ingredienteId: id, esRemovible: true }]);
+    } else {
+      this.ingredientesSeleccionados.update(list => list.filter(x => x.ingredienteId !== id));
+    }
+  }
+  
+  toggleRemovible(id: number, e: Event): void {
+    const checked = (e.target as HTMLInputElement).checked;
+    this.ingredientesSeleccionados.update(list => list.map(x => x.ingredienteId === id ? { ...x, esRemovible: checked } : x));
+  }
+
+  agregarIngrediente(): void {
+    const nombre = this.nuevoIngrediente().trim();
+    if (!nombre) return;
+    this.creandoIngrediente.set(true);
+    this.ingSvc.create({ nombre }).subscribe({
+      next: (ing) => {
+        this.allIngredientes.update(list => [...list, ing].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+        this.nuevoIngrediente.set('');
+        this.creandoIngrediente.set(false);
+        this.toast.success('Ingrediente agregado a la lista');
+      },
+      error: () => {
+        this.toast.error('Error al crear ingrediente');
+        this.creandoIngrediente.set(false);
+      }
     });
   }
 }

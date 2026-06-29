@@ -1,8 +1,9 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PedidosService } from '../../core/services/api.services';
 import { ToastService } from '../../core/services/toast.service';
 import { Pedido, EstadoPedido } from '../../core/models';
+import { SocketService } from '../../core/services/socket.service';
 
 @Component({
   selector: 'app-pedidos-admin',
@@ -78,8 +79,32 @@ import { Pedido, EstadoPedido } from '../../core/models';
 export class PedidosAdminComponent implements OnInit {
   private svc   = inject(PedidosService);
   private toast = inject(ToastService);
+  private socketSvc = inject(SocketService);
+  
   pedidos = signal<Pedido[]>([]);
   loading = signal(true);
+
+  constructor() {
+    effect(() => {
+      const nuevo = this.socketSvc.nuevoPedido();
+      if (nuevo) {
+        this.pedidos.update(list => {
+          if (!list.find(p => p.id === nuevo.id)) {
+            this.toast.success(`Nuevo pedido #${nuevo.id} recibido`);
+            return [nuevo, ...list];
+          }
+          return list;
+        });
+      }
+    }, { allowSignalWrites: true });
+
+    effect(() => {
+      const pUpdate = this.socketSvc.pedidoActualizado();
+      if (pUpdate) {
+        this.pedidos.update(list => list.map(p => p.id === pUpdate.id ? { ...p, estado: pUpdate.estado } : p));
+      }
+    }, { allowSignalWrites: true });
+  }
 
   estados = [
     { value:'pendiente',       label:'Pendiente' },
