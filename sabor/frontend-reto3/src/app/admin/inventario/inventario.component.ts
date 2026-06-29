@@ -28,7 +28,6 @@ import { IngredientesService, UnidadesService } from '../../core/services/api.se
           <thead style="background:#f8f5f0">
             <tr>
               <th>Ingrediente</th>
-              <th>Tipo</th>
               <th>Unidad</th>
               <th>Stock actual</th>
               <th>Stock mínimo</th>
@@ -38,12 +37,11 @@ import { IngredientesService, UnidadesService } from '../../core/services/api.se
           </thead>
           <tbody>
             @if (loading()) {
-              <tr><td colspan="7" class="text-center py-4 text-muted">Cargando...</td></tr>
+              <tr><td colspan="6" class="text-center py-4 text-muted">Cargando...</td></tr>
             }
             @for (ing of ingredientes(); track ing.id) {
               <tr [class.table-danger]="ing.stock <= ing.stockMinimo">
                 <td class="fw-semibold">{{ ing.nombre }}</td>
-                <td><span class="badge bg-secondary">{{ ing.tipo || 'base' }}</span></td>
                 <td>
                   @if (editando()?.id === ing.id) {
                     <select class="form-select form-select-sm" style="width:120px"
