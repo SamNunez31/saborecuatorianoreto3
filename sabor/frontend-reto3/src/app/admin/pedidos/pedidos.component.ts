@@ -56,14 +56,18 @@ import { SocketService } from '../../core/services/socket.service';
                 <td><span class="badge" [ngClass]="'badge-' + p.estado">{{ estadoLabel(p.estado) }}</span></td>
                 <td style="font-size:12px;white-space:nowrap;color:var(--se-gris)">{{ p.fechaPedido | date:'dd/MM HH:mm' }}</td>
                 <td>
-                  <select class="form-select form-select-sm" style="font-size:12px"
-                          [value]="p.estado" (change)="cambiarEstado(p.id, $event)"
-                          [disabled]="p.estado === 'listo' || p.estado === 'entregado' || p.estado === 'cancelado'"
-                          [attr.aria-label]="'Estado del pedido #' + p.id">
-                    @for (e of estados; track e.value) {
-                      <option [value]="e.value" [selected]="p.estado === e.value">{{ e.label }}</option>
-                    }
-                  </select>
+                  @if (p.estado !== 'cancelado') {
+                    <select class="form-select form-select-sm" style="font-size:12px"
+                            [value]="p.estado" (change)="cambiarEstado(p.id, $event)"
+                            [disabled]="p.estado === 'listo' || p.estado === 'entregado'"
+                            [attr.aria-label]="'Estado del pedido #' + p.id">
+                      @for (e of estados; track e.value) {
+                        <option [value]="e.value" [selected]="p.estado === e.value">{{ e.label }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <span class="text-muted" style="font-size:12px">—</span>
+                  }
                 </td>
               </tr>
             }
