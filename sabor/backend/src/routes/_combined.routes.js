@@ -48,9 +48,15 @@ pagoRouter.post('/', authMiddleware, async (req, res, next) => {
   try {
     const { facturaId, formaPagoId, tarjetaId, monto, referencia } = req.body;
     const pago = await prisma.pago.create({
-      data:{ facturaId:+facturaId, formaPagoId:+formaPagoId, tarjetaId:tarjetaId?+tarjetaId:null, monto:+monto, referencia }
+      data: {
+        facturaId:   parseInt(facturaId),
+        formaPagoId: parseInt(formaPagoId),
+        tarjetaId:   tarjetaId != null && tarjetaId !== '' ? parseInt(tarjetaId) : null,
+        monto:       parseFloat(monto),
+        referencia:  referencia || null
+      }
     });
-    await prisma.factura.update({ where:{ id:+facturaId }, data:{ estado:'pagada' } });
+    await prisma.factura.update({ where: { id: parseInt(facturaId) }, data: { estado: 'pagada' } });
     res.status(201).json(pago);
   } catch(e) { next(e); }
 });
