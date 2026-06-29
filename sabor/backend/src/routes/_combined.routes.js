@@ -76,9 +76,16 @@ tarjRouter.post('/', authMiddleware, async (req, res, next) => {
     const { titular, numero, marca, mesExp, anioExp } = req.body;
     const limpio = numero.replace(/\s/g,'');
     const ultimos4 = limpio.slice(-4);
+    const numeroMasked = `**** **** **** ${ultimos4}`;
+
+    const existente = await prisma.tarjeta.findFirst({
+      where: { clienteId: req.user.clienteId, numeroMasked, marca, mesExp, anioExp }
+    });
+    if (existente) return res.status(400).json({ error: 'Esta tarjeta ya se encuentra registrada en tu cuenta.' });
+
     const count = await prisma.tarjeta.count({ where:{ clienteId:req.user.clienteId } });
     const t = await prisma.tarjeta.create({
-      data:{ clienteId:req.user.clienteId, titular, numeroMasked:`**** **** **** ${ultimos4}`, marca, mesExp, anioExp, esPrincipal:count===0 }
+      data:{ clienteId:req.user.clienteId, titular, numeroMasked, marca, mesExp, anioExp, esPrincipal:count===0 }
     });
     res.status(201).json(t);
   } catch(e) { next(e); }
